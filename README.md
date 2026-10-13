@@ -10,7 +10,7 @@
 ## ⚡ Zero-Friction Setup & Quick Start
 
 ### 📋 Prerequisites
-- **Node.js:** `>= 18.0.0` (Tested on Node `v20.x` & `v24.x`)
+- **Node.js:** `>= 20.0.0` (Recommended: Node `v22.x` Active LTS via `.nvmrc`, tested on Node `v20.x`–`v24.x`)
 - **npm:** `>= 9.0.0`
 - Zero external infrastructure required (no Docker, PostgreSQL, or cloud services needed — powered by atomic SQLite).
 
