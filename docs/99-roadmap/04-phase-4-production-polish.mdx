@@ -1,0 +1,80 @@
+---
+title: 'Phase 4: Production Polish, Architectural Documentation & Frontend Modularization'
+sidebar_label: Phase 4 - Production Polish
+sidebar_position: 5
+---
+
+import Mermaid from '@site/src/components/Mermaid';
+
+<div className="page-header-wrapper">
+  <div className="page-badge">
+    <span className="status-badge status-badge--implemented">Status: Implemented</span>
+  </div>
+
+# 🚀 Phase 4: Production Polish, Architectural Documentation & Frontend Modularization
+
+</div>
+
+> **Created at:** 2026-10-13 | **Updated at:** 2026-10-13 <br />
+> **Initiator:** Indra SB | **Last Auditor:** Indra SB
+
+> **Target Timeline:** Wave 4 (Production Hardening)  
+> **Status:** Implemented (100% Completed)
+
+This phase elevated the codebase to Senior / Production-Grade standards by embedding in-code architectural decision records across the backend, decomposing the monolithic `page.tsx` (~788 lines) into 5 focused reusable components in `src/components/wallet/`, and validating zero regression across tests.
+
+---
+
+## 🎯 1. Scope & Execution Tracks
+
+<Mermaid withCard chart={`graph TD
+    subgraph TrackA["Track A: Backend Architectural Notes"]
+        A1["Double-Entry Atomicity & UoW Note"]
+        A2["Financial Precision & Epsilon Note"]
+        A3["Resilience & Triangular Fallback Note"]
+        A4["Rich Entity Encapsulation Note"]
+        A5["Zero-Reflection DI Composition Note"]
+    end
+
+    subgraph TrackB["Track B: Frontend Modularization"]
+        B1["PortfolioOverview.tsx"]
+        B2["WalletCardGrid.tsx"]
+        B3["WalletActionWorkbench.tsx"]
+        B4["LedgerAuditTable.tsx"]
+        B5["TransactionDetailModal.tsx"]
+        B6["page.tsx Refactor (Clean Orchestrator)"]
+    end
+
+    subgraph TrackC["Track C: Verification"]
+        C1["Vitest Suite (39 Passing)"]
+        C2["Next.js Production Build Validation"]
+        C3["Docusaurus Documentation Compilation"]
+    end
+
+    TrackA --> TrackC
+    TrackB --> TrackC
+`} />
+
+---
+
+## 📋 2. Epic Task Checklist
+
+### ⚙️ Track A: Backend In-Code Architectural Notes
+- [x] Documented Double-Entry & UoW trade-offs in `ConvertFundsUseCase.ts` & `TransferFundsUseCase.ts`
+- [x] Documented ISO subunit precision and IEEE-754 epsilon guards in `currency-math.ts`
+- [x] Documented resilience and triangular arbitrage fallback in `FrankfurterExchangeRateService.ts`
+- [x] Documented rich entity encapsulation invariants in `Wallet.ts`
+- [x] Documented composition root zero-reflection DI in `container.ts`
+
+### 🎨 Track B: Frontend Component Decomposition
+- [x] Extracted `PortfolioOverview.tsx`: Portfolio header, user badge, and live FX rate ticker
+- [x] Extracted `WalletCardGrid.tsx`: Multi-currency wallet balance cards (`USD`, `EUR`, `GBP`, `SGD`, `JPY`)
+- [x] Extracted `WalletActionWorkbench.tsx`: Tabbed transaction form (Deposit, Withdraw, Convert, Transfer) with live conversion preview
+- [x] Extracted `LedgerAuditTable.tsx`: Filter bar, transaction audit table, and color-coded status badges
+- [x] Extracted `TransactionDetailModal.tsx`: Individual transaction audit detail inspector dialog
+- [x] Refactored `src/app/page.tsx` into a lean page orchestrator (~308 lines)
+
+### 🧪 Track C: Full Regression & Build Validation
+- [x] Verified Vitest: All 39 tests passing in `< 300ms`
+- [x] Verified TypeScript compilation: `npx tsc --noEmit` exits with 0 errors
+- [x] Verified Docusaurus viewer build: `npm run docs:build` generates static assets cleanly

@@ -1,0 +1,76 @@
+/**
+ * Any CSS included here will be global. The classic template
+ * bundles Infima by default. Infima is a CSS framework designed to
+ * work well for content-centric websites.
+ */
+
+/* You can override the default Infima variables here. */
+:root {
+  --ifm-color-primary: #2e8555;
+  --ifm-color-primary-dark: #29784c;
+  --ifm-color-primary-darker: #277148;
+  --ifm-color-primary-darkest: #205d3b;
+  --ifm-color-primary-light: #33925d;
+  --ifm-color-primary-lighter: #359962;
+  --ifm-color-primary-lightest: #3cad6e;
+  --ifm-code-font-size: 95%;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+}
+
+/* For readability concerns, you should choose a lighter palette in dark mode. */
+[data-theme='dark'] {
+  --ifm-color-primary: #25c2a0;
+  --ifm-color-primary-dark: #21af90;
+  --ifm-color-primary-darker: #1fa588;
+  --ifm-color-primary-darkest: #1a8870;
+  --ifm-color-primary-light: #29d5b0;
+  --ifm-color-primary-lighter: #32d8b4;
+  --ifm-color-primary-lightest: #4fddbf;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+}
+
+/* Badge for doc status (placed above or positioned over the title) */
+.page-badge {
+  margin-bottom: 0.5rem;
+  float: right;
+  margin-left: 1rem;
+  /* lift it visually to align with the title */
+  margin-top: -0.4rem;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.18rem 0.6rem;
+  border-radius: 999px;
+  font-size: 1.3rem;
+  font-weight: 600;
+  line-height: 1;
+  color: #fff;
+  vertical-align: middle;
+}
+
+.status-badge--plan { background: #f0ad4e; }       /* orange */
+.status-badge--implemented { background: #28a745; }/* green */
+.status-badge--draft { background: #6c757d; }      /* gray */
+.status-badge--experimental { background: #6f42c1; }/* purple */
+.status-badge--deprecated { background: #dc3545; } /* deprecated - red */
+
+/* Optional: position the badge at the top-right of the page header */
+.page-header-wrapper { 
+  position: relative; 
+  /* reserve space on the right so the title doesn't sit under the badge */
+  padding-right: 6rem;
+}
+.page-header-wrapper .page-badge {
+  position: absolute;
+  right: 1rem; /* move slightly in from the edge for visual breathing room */
+  top: 0.2rem;
+}
+
+@media (max-width: 720px) {
+  .page-header-wrapper .page-badge { position: static; margin-top: 0.5rem; }
+  /* For small screens, cancel floating so badge stacks above title */
+  .page-badge { float: none; margin-left: 0; margin-top: 0.5rem; display: inline-block; }
+  /* remove the extra right padding on small screens so layout stays natural */
+  .page-header-wrapper { padding-right: 0; }
+}

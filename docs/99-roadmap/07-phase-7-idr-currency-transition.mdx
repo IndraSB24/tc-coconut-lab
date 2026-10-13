@@ -1,0 +1,100 @@
+---
+title: 'Phase 7: IDR (Indonesian Rupiah) Zero-Decimal Currency Transition'
+sidebar_label: Phase 7 - IDR Currency Transition
+sidebar_position: 8
+---
+
+import Mermaid from '@site/src/components/Mermaid';
+
+<div className="page-header-wrapper">
+  <div className="page-badge">
+    <span className="status-badge status-badge--implemented">Status: Implemented</span>
+  </div>
+
+# 🇮🇩 Phase 7: IDR (Indonesian Rupiah) Zero-Decimal Currency Transition
+
+</div>
+
+> **Created at:** 2026-10-13 | **Updated at:** 2026-10-13 <br />
+> **Initiator:** Indra SB | **Last Auditor:** Indra SB
+
+> **Target Timeline:** Wave 7 (Currency Localization & Big-Number Scale)  
+> **Status:** Completed (100% / 🟢)
+
+This phase executes the architectural ratification to transition from **Japanese Yen (`JPY`)** to **Indonesian Rupiah (`IDR`)** as the designated zero-decimal foreign exchange wallet. IDR shares the identical financial invariant profile as JPY (0 decimal places per ISO 4217, whole units), while significantly enhancing presentation relatability and validating system resilience with large-scale financial integers (millions/billions with localized thousands separators).
+
+---
+
+## 🎯 1. Scope & Execution Tracks
+
+<Mermaid withCard chart={`graph TD
+    subgraph TrackA["Track A: Domain & Exchange Rate Service"]
+        A1["Update Supported Currencies List: IDR"]
+        A2["Zero-Decimal Mathematical Invariant in currency-math.ts"]
+        A3["Calibrated Static Fallback Matrix: USD_IDR 15,850.0"]
+        A4["Frankfurter API Gateway ECB Endpoint Verification"]
+    end
+
+    subgraph TrackB["Track B: Persistence & Seeding"]
+        B1["Prisma dev.db Schema Alignment"]
+        B2["Database Seeder: wallet-idr with Rp 15,000,000"]
+    end
+
+    subgraph TrackC["Track C: Frontend Presentation & Formatting"]
+        C1["Currency Symbols: IDR -> Rp Adornment"]
+        C2["Portfolio Overview Live Ticker: 1 USD = IDR"]
+        C3["Zero-Decimal Truncation in Workbench Form"]
+    end
+
+    subgraph TrackD["Track D: Automated Verification"]
+        D1["Unit Tests Alignment (Wallet, Convert, Gateway)"]
+        D2["Frontend Component Tests (CardGrid, Workbench)"]
+        D3["TypeScript Strict Typecheck (0 Errors)"]
+    end
+
+    TrackA --> TrackB
+    TrackB --> TrackC
+    TrackC --> TrackD
+`} />
+
+---
+
+## 📋 2. Epic Task Checklist
+
+### ⚙️ Track A: Domain & Exchange Rate Service
+- [x] Update `SUPPORTED_CURRENCIES` to include `IDR` in `src/core/domain/utils/currency-math.ts`
+- [x] Ensure `roundCurrency()` preserves 0-decimal scale for `IDR` (`Math.round(amount + Number.EPSILON)`)
+- [x] Update `STATIC_USD_RATES` with `IDR: 15850.0` in `src/infrastructure/services/FrankfurterExchangeRateService.ts`
+- [x] Update unsupported currency error catalog in `src/core/domain/errors/domain.error.ts`
+
+### 🗄️ Track B: Persistence & Seeding
+- [x] Update `prisma/schema.prisma` model documentation to list `USD, EUR, GBP, SGD, IDR`
+- [x] Update `prisma/seed.ts` to provision `wallet-idr` with balance `15000000.0` (Rp 15,000,000)
+- [x] Execute `npx prisma db push && npx tsx prisma/seed.ts` to re-seed SQLite dev.db
+
+### 🎨 Track C: Frontend Presentation & Formatting
+- [x] Update currency symbol map in `src/components/wallet/types.ts` (`IDR: 'Rp'`)
+- [x] Update ticker quotes in `src/app/page.tsx` (`['EUR', 'GBP', 'SGD', 'IDR']`)
+- [x] Update live ticker strip in `src/components/wallet/PortfolioOverview.tsx`
+- [x] Update input adornment and submit button preview in `src/components/wallet/WalletActionWorkbench.tsx`
+
+### 🧪 Track D: Quality Assurance & Full Regression
+- [x] Update backend domain tests (`Wallet.spec.ts`, `ConvertFunds.spec.ts`, `FrankfurterGateway.spec.ts`)
+- [x] Update frontend component tests (`WalletCardGrid.test.tsx`, `WalletActionWorkbench.test.tsx`)
+- [x] Run full Vitest suite (49/49 green tests)
+- [x] Verify clean TypeScript typecheck (`npx tsc --noEmit --incremental false`)
+
+---
+
+## 🧪 3. Verification Commands
+
+```bash
+# 1. Re-seed SQLite with IDR wallet
+npx tsx prisma/seed.ts
+
+# 2. Run automated test suite
+npm test
+
+# 3. Verify TypeScript type safety
+npx tsc --noEmit --incremental false
+```

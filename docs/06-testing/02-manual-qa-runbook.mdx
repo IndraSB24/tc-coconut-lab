@@ -1,0 +1,154 @@
+---
+title: 'Manual QA Runbook: User Acceptance Testing (UAT)'
+sidebar_label: Manual QA Runbook
+sidebar_position: 2
+---
+
+import Mermaid from '@site/src/components/Mermaid';
+
+<div className="page-header-wrapper">
+  <div className="page-badge">
+    <span className="status-badge status-badge--implemented">Status: Implemented</span>
+  </div>
+
+# 📋 Manual QA Runbook: User Acceptance Testing (UAT)
+
+</div>
+
+> **Created at:** 2026-10-13 | **Updated at:** 2026-10-13 <br />
+> **Initiator:** Indra SB | **Last Auditor:** Indra SB
+
+This runbook provides a step-by-step **User Acceptance Testing (UAT) and Manual Smoke Test Protocol** for evaluators and QA engineers verifying the **Multi-Currency Digital Wallet Workbench** on `http://localhost:3000`.
+
+---
+
+## 🎯 1. Objectives & Scope
+
+While the codebase is fortified by **81 automated Vitest tests**, manual verification guarantees that real user interactions, visual transitions, and the **4 Core UI States** (Loading, Error, Empty, Success) behave reliably in a browser environment.
+
+<Mermaid withCard chart={`graph LR
+    TC1["TC-01<br/>Identity & Cards"] --> TC2["TC-02<br/>Deposit Flow"]
+    TC2 --> TC3["TC-03<br/>Overdraft Guard"]
+    TC3 --> TC4["TC-04<br/>FX Conversion"]
+    TC4 --> TC5["TC-05<br/>Transfer Guard"]
+    TC5 --> TC6["TC-06<br/>Debounced Search"]
+    TC6 --> TC7["TC-07<br/>Modal Inspector"]
+    TC7 --> TC8["TC-08<br/>Add Sub-Wallet"]
+    TC8 --> TC9["TC-09<br/>Sibling Transfer"]
+`} />
+
+---
+
+## ⚡ 2. Environment Prerequisites
+
+Before initiating the manual test protocol, ensure the runtime application is running:
+
+```bash
+# Terminal 1: Launch Runtime Application
+npm run dev
+# URL: http://localhost:3000
+
+# Terminal 2: (Optional) Launch Living SSOT Portal
+npm run docs:dev
+# URL: http://localhost:7001
+```
+
+---
+
+## 🧪 3. Step-by-Step Verification Protocol
+
+### ✅ TC-01: Identity, Net Worth & Multi-Currency Cards
+| Parameter | Specification |
+| :--- | :--- |
+| **Objective** | Verify single simulated user session and multi-currency portfolio display. |
+| **Precondition** | Application loaded at `http://localhost:3000`. |
+| **Action** | Inspect the navigation bar, portfolio summary, and wallet card grid. |
+| **Expected Result** | • Header displays badge: `Simulated User: Indra SB (Active)`.<br />• Header includes link button `Living Docs (7001)`.<br />• Total portfolio net worth is calculated dynamically in base USD.<br />• Pre-seeded core currency cards are displayed: `USD`, `EUR`, `GBP`, `SGD`, and `IDR` with accurate currency symbols and formatted balances, accompanied by the primary `[+ New Pocket]` button. |
+
+---
+
+### ✅ TC-02: Deposit Simulated Funds (Happy Path)
+| Parameter | Specification |
+| :--- | :--- |
+| **Objective** | Verify inbound fund allocation and reactive balance synchronization. |
+| **Action** | 1. Navigate to tab **Deposit Simulated Funds**.<br />2. Select **USD Wallet**.<br />3. Enter amount `100.00` and note *"Test initial deposit"*.<br />4. Click **Execute DEPOSIT (USD)**. |
+| **Expected Result** | • Green toast notification appears: `Transaction successful! (Ref: ...)`.<br />• USD Wallet card balance immediately increments by `$100.00`.<br />• Audit ledger at the bottom immediately prepends a new row with badge `DEPOSIT` and `+$100 USD`. |
+
+---
+
+### ✅ TC-03: Overdraft Guard (Negative / Domain Error State)
+| Parameter | Specification |
+| :--- | :--- |
+| **Objective** | Verify strict non-negative balance invariant (`balance >= 0`). |
+| **Action** | 1. Navigate to tab **Withdraw Funds**.<br />2. Select **USD Wallet**.<br />3. Enter an amount exceeding current balance (e.g., `999999.00`).<br />4. Click **Execute WITHDRAW (USD)**. |
+| **Expected Result** | • Red error toast appears: `Insufficient balance in wallet ...`.<br />• Wallet balance remains **completely unchanged**.<br />• No invalid debit transaction is created in the audit ledger. |
+
+---
+
+### ✅ TC-04: Currency Conversion with Live Rates & 1-Click Swap
+| Parameter | Specification |
+| :--- | :--- |
+| **Objective** | Verify real-time yield preview, currency swapping, and paired double-entry ledger persistence. |
+| **Action** | 1. Navigate to tab **Convert Currencies**.<br />2. Under *You Convert (Sell)*, select **USD Wallet** and enter `10.00`.<br />3. Under *You Receive (Estimated Yield)*, select **EUR Wallet**.<br />4. Observe the live calculated yield card.<br />5. Click the **⇄ Swap Currencies** button and verify reversal.<br />6. Re-swap back to USD ➔ EUR and click **Convert 10.00 USD to ... EUR**. |
+| **Expected Result** | • Dynamic conversion rate ticker shows current Frankfurter mid-market rate.<br />• Submit button dynamically displays formatted amount (e.g., `Convert 10.00 USD to X.XX EUR`).<br />• Success toast displays generated correlation `referenceId`.<br />• Audit ledger records **two correlated entries bound by the same Reference ID**:<br />  - `CONVERT_OUT` on USD Wallet (`-$10.00 USD`).<br />  - `CONVERT_IN` on EUR Wallet (`+X.XX EUR`). |
+
+---
+
+### ✅ TC-05: Strict Cross-Currency Transfer Guard (Single Pocket Guidance)
+| Parameter | Specification |
+| :--- | :--- |
+| **Objective** | Verify strict same-currency transfer invariant and guidance when only 1 pocket exists. |
+| **Action** | 1. Navigate to tab **Transfer Funds**.<br />2. Inspect the *From Pocket* and *To Pocket* selectors when only initial single-currency wallets exist.<br />3. Observe the Destination selector behavior. |
+| **Expected Result** | • Destination selector shows disabled state: *"No secondary USD pocket"*.<br />• Amber guidance alert appears explaining: *"You only have 1 USD pocket. Use '+ New Pocket' to create a sub-wallet (e.g. USD Savings) before making internal transfers. For exchanging between different currencies, use Convert Currencies."*<br />• Prohibits cross-currency leakage inside the transfer form. |
+
+---
+
+### ✅ TC-06: Debounced Search & Filter Mutasi (Quality of Life Polish)
+| Parameter | Specification |
+| :--- | :--- |
+| **Objective** | Verify keystroke debouncing (250ms) and illustrated empty state. |
+| **Action** | 1. Scroll down to the **Immutable Transaction Audit Ledger**.<br />2. Type rapidly into the search box: *"split"*.<br />3. Observe that table filtering waits for a 250ms typing pause rather than thrashing on every keystroke.<br />4. Change the dropdown filter from `All Types` to `DEPOSIT`.<br />5. In the search box, type a non-existent string (e.g., *"unknown-ref-999"*). |
+| **Expected Result** | • Search executes smoothly with 250ms debounce guard.<br />• Filter displays only matching rows.<br />• When zero results match, an illustrated **Empty State** renders:<br />  - Icon: `ReceiptText`<br />  - Title: *"No transaction records found matching filters."*<br />  - Subtext: *"Adjust wallet/type filters or search query to find records."* |
+
+---
+
+### ✅ TC-07: Detail Modal Inspector (Financial Audit Trail)
+| Parameter | Specification |
+| :--- | :--- |
+| **Objective** | Verify deep-dive modal inspection for individual transaction records. |
+| **Action** | 1. Clear the search box to restore transaction rows.<br />2. In any conversion or transfer row, click the **Detail** button in the *Inspect* column.<br />3. Review the opened popup modal.<br />4. Press `Escape` on your keyboard or click the **Close** button. |
+| **Expected Result** | • Modal pops up displaying complete audit metadata:<br />  - Unique Transaction UUID & Shared Reference ID.<br />  - Operation Type, Timestamp, Counterparty Wallet, and Applied Exchange Rate.<br />  - Balance Before and Balance After.<br />• Modal closes cleanly without visual artifacts or residual backdrop locks. |
+
+---
+
+### ✅ TC-08: Add New Sub-Wallet / Custom Pocket Creation (Phase 11)
+| Parameter | Specification |
+| :--- | :--- |
+| **Objective** | Verify dynamic sub-wallet creation and multi-account expansion. |
+| **Action** | 1. Click the primary **[+ New Pocket]** button in the header or the dashed **+ New Sub-Pocket** card at the carousel end.<br />2. In the modal, select Currency: **USD**.<br />3. Enter Pocket Name: *"USD Savings"*.<br />4. Click **Create Pocket**. |
+| **Expected Result** | • Green toast appears: `Created USD Pocket 'USD Savings'`.<br />• Modal closes cleanly.<br />• Wallet carousel immediately renders the new card **USD Savings** with `$0.00` initial balance.<br />• Total wallet count increments to 6. |
+
+---
+
+### ✅ TC-09: Inter-Wallet 1:1 Same-Currency Sibling Transfer (Phase 11)
+| Parameter | Specification |
+| :--- | :--- |
+| **Objective** | Verify strict 1:1 intra-currency fund transfer between sibling wallets. |
+| **Action** | 1. Navigate to tab **Transfer Funds**.<br />2. Select *From Pocket*: **USD Main**.<br />3. Select *To Pocket*: **USD Savings** (now available in the dropdown).<br />4. Enter amount `50.00` and note *"Emergency fund allocation"*.<br />5. Click **Transfer $50.00 USD to USD Savings**. |
+| **Expected Result** | • Green toast notification confirms successful transfer.<br />• `USD Main` decrements by `$50.00`.<br />• `USD Savings` increments by exactly `$50.00` (1:1 exact accounting, 0 exchange fees).<br />• Ledger records paired `TRANSFER_OUT` (-$50 USD) and `TRANSFER_IN` (+$50 USD) bound by the same `referenceId`. |
+
+---
+
+## 📊 4. Acceptance Sign-Off Matrix
+
+| Test Case | Feature Tested | Method | Success Criteria | Status |
+| :--- | :--- | :--- | :--- | :---: |
+| **TC-01** | Simulated User & Wallets | Visual Inspection | Single-user Indra SB badge & multi-currency cards visible | ✅ Passed |
+| **TC-02** | Deposit Inbound Allocation | Form Execution | Balance increments, ledger appends `DEPOSIT` | ✅ Passed |
+| **TC-03** | Overdraft Protection | Boundary Testing | `Insufficient balance` toast, zero state alteration | ✅ Passed |
+| **TC-04** | Live FX Conversion & Swap | Fintech UX Flow | Live preview, swap toggles, paired double-entry ledger | ✅ Passed |
+| **TC-05** | Same-Currency Transfer Guard | Invariant Testing | Dropdown isolation & guidance alert when only 1 pocket exists | ✅ Passed |
+| **TC-06** | Debounced Search & Empty State | Interactive UI | 250ms debounce verified, illustrated empty prompt | ✅ Passed |
+| **TC-07** | Detail Audit Modal Inspector | Inspection Modal | Full metadata display, clean modal dismissal | ✅ Passed |
+| **TC-08** | Dynamic Pocket Creation | Modal & State Sync | New `USD Savings` card appears, zero page reload | ✅ Passed |
+| **TC-09** | 1:1 Intra-Currency Transfer | Financial Invariant | Exact 1:1 transfer math between sibling pockets with paired audit log | ✅ Passed |

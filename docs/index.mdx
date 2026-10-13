@@ -1,0 +1,53 @@
+---
+title: Multi-Currency Digital Wallet (Coconut Lab)
+slug: /
+---
+
+<div className="page-header-wrapper">
+  <div className="page-badge">
+    <span className="status-badge status-badge--implemented">Status: Implemented</span>
+  </div>
+
+# 🥥 Multi-Currency Digital Wallet (Coconut Lab)
+
+</div>
+
+> **Created at:** 2026-10-13 | **Updated at:** 2026-10-13 <br />
+> **Initiator:** Indra SB | **Last Auditor:** Indra SB
+
+Welcome to the technical architecture documentation portal for the **Multi-Currency Digital Wallet Application** built for the **Coconut Lab** live coding challenge.
+
+This system follows **Domain-Driven Design (DDD)**, **Clean Architecture**, and **Living SSOT (Docs-as-Code)** standards. All domain invariants, double-entry financial accounting rules, and API specifications are documented here as machine-verifiable truth.
+
+---
+
+## 🧭 Architecture & Documentation Roadmap
+
+1. **[Product Requirements & Scope (SSOT)](./00-prd/01-live-challenge-spec.mdx):** Complete challenge requirements, user capabilities, simulated user design, and out-of-scope boundaries.
+2. **[System Architecture & Frankfurter Gateway](./01-architecture/01-system-architecture.mdx):** Clean 4-tier DDD layering, Frankfurter FX rate gateway with resilient fallback, and double-entry transaction lifecycle.
+3. **[Frontend Architecture & The 4 UI States](./01-architecture/02-frontend-architecture.mdx):** Pragmatic component breakdown, unidirectional data flow, 250ms search debouncing, and exhaustive handling of all 4 UI states.
+4. **[Tech Stack & Standards](./02-tech-stack/index.mdx):** Technology selection rationale (Next.js 16 App Router, TypeScript Strict, Prisma ORM, SQLite, Vitest, Tailwind CSS).
+5. **[Domain Invariants & Currency Precision](./03-domain-logic/01-multi-currency-wallet-invariants.mdx):** Financial arithmetic precision (`IDR` 0-decimal vs `USD`/`EUR`/`GBP`/`SGD` 2-decimal), IEEE-754 epsilon guard, and error catalog.
+6. **[API Contracts & DTOs](./04-api-contracts/01-wallet-endpoints.mdx):** Standard REST envelopes, route definitions, and request/response schemas.
+7. **[Operations Runbook](./05-operations/01-operations-runbook.mdx):** Quick start guide, port allocations (3000 & 7001), seeding instructions, and runtime commands.
+8. **[Testing Strategy & QA](./06-testing/01-testing-strategy.mdx):** Automated Vitest test suite matrix (81 passing tests: 44 backend domain + 37 frontend components) and in-memory mock isolation.
+9. **[Manual QA & UAT Runbook](./06-testing/02-manual-qa-runbook.mdx):** 9-step interactive UAT protocol (TC-01 through TC-09) covering multi-currency cards, live FX conversions, dynamic sub-pocket creation, and 1:1 intra-currency transfers on port 3000.
+10. **[Master Implementation Roadmap](./99-roadmap/00-master-progress.mdx):** Progressive delivery breakdown across implementation milestones.
+11. **[Enterprise Ledger Evolution (Target Scaling Architecture)](./01-architecture/03-enterprise-ledger-evolution.mdx):** 6-table normalized double-entry ledger & FX conversion auditing blueprint.
+
+---
+
+## 🚀 Quick Execution Guide
+
+Run both the runtime application and this interactive documentation portal concurrently:
+
+```bash
+# 1. Run the Runtime Application (Next.js 16 on Port 3000)
+npm run dev
+
+# 2. Run the Interactive Documentation Portal (Docusaurus on Port 7001)
+npm run docs:dev
+
+# 3. Run Automated Unit Tests (Vitest)
+npm test
+```

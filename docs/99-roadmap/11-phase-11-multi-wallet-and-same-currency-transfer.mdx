@@ -1,0 +1,122 @@
+---
+title: 'Phase 11: Multi-Sub-Wallet Creation & Strict Same-Currency Transfer Enforcement'
+sidebar_label: Phase 11 - Multi-Sub-Wallets
+sidebar_position: 12
+---
+
+import Mermaid from '@site/src/components/Mermaid';
+
+<div className="page-header-wrapper">
+  <div className="page-badge">
+    <span className="status-badge status-badge--implemented">Status: Implemented</span>
+  </div>
+
+# 👛 Phase 11: Multi-Sub-Wallet Creation & Strict Same-Currency Transfer Enforcement
+
+</div>
+
+> **Created at:** 2026-10-13 | **Updated at:** 2026-10-13 <br />
+> **Initiator:** Indra SB | **Last Auditor:** Indra SB
+
+> **Target Timeline:** Wave 11 (Fintech Multi-Account Paradigm & Transfer Disambiguation)  
+> **Status:** Completed (100% / 🟢)
+
+This phase resolves transactional ambiguity between **Currency Conversion** and **Inter-Wallet Transfers** by adopting the industry-standard **Multi-Sub-Wallet / Account Pots** pattern (modeled after Revolut Pockets and Monzo Pots). It empowers the user to create multiple wallets within the same currency (e.g., *USD Main*, *USD Savings*, *IDR Daily*), enforces strict **1:1 same-currency transfers**, eliminates cross-currency leakage in the transfer workflow, and refactors wallet cards into a horizontal scrollable view with quick currency filters and an integrated `+ Add Wallet` modal trigger. Additionally, it polishes action button labels with locale-aware thousand separators.
+
+---
+
+## 🎯 1. Scope & Execution Tracks
+
+<Mermaid withCard chart={`graph TD
+    subgraph TrackA["Track A: Schema & Domain Invariants"]
+        A1["Prisma Schema: Drop @@unique([userId, currency]), add name field"]
+        A2["Wallet Entity: Incorporate optional/default wallet name"]
+        A3["CreateWalletUseCase: Validation, duplicate naming rules, persistence"]
+        A4["TransferFundsUseCase: Enforce CurrencyMismatchTransferError"]
+        A5["TransferFundsUseCase: Pure 1:1 math & strictly log TRANSFER_OUT / TRANSFER_IN"]
+    end
+
+    subgraph TrackB["Track B: REST API Handlers & DTOs"]
+        B1["POST /api/wallets: Handler for new wallet creation"]
+        B2["POST /api/wallets/transfer: Handle CurrencyMismatchTransferError (HTTP 400)"]
+        B3["Update GET /api/wallets: Return wallet name and grouped currency metadata"]
+    end
+
+    subgraph TrackC["Track C: UI/UX Transformation & Polish"]
+        C1["Horizontal Scrollable Cards: Clean overflow carousel for wallets"]
+        C2["Currency Filter Chips: Quick toggle (All, USD, EUR, GBP, SGD, IDR)"]
+        C3["+ Add Wallet Action Card: Interactive modal with currency & name input"]
+        C4["Transfer Form Guard: Filter 'To Wallet' to same currency only"]
+        C5["Bugfix: Thousand separator on action submit buttons (Convert 1,000,000,000 IDR...)"]
+    end
+
+    subgraph TrackD["Track D: Quality Assurance & Vitest"]
+        D1["CreateWalletUseCase.spec.ts: Happy path & validation tests"]
+        D2["TransferFunds.spec.ts: Same-currency 1:1 & mismatch rejection tests"]
+        D3["Frontend Component Specs: Test new Add Wallet and filter interactions"]
+        D4["Regression Verification: All Vitest suites passing in ~1s"]
+    end
+
+    TrackA --> TrackB --> TrackC --> TrackD
+`} />
+
+---
+
+## 📋 2. Detailed Technical Specifications
+
+### 2.1 Track A: Schema & Domain Invariants
+1. **Prisma Model Update (`schema.prisma`):**
+   - Remove `@@unique([userId, currency])`.
+   - Add `name String @default("Main")` to `model Wallet`.
+   - Execute `npx prisma db push` (and refresh SQLite seeder if needed).
+2. **Domain Entity Update (`Wallet.ts`):**
+   - Accept optional `name?: string` in constructor and `toJSON()`.
+3. **Use Case: `CreateWalletUseCase`:**
+   - DTO: `{ userId: string; currency: string; name: string }`.
+   - Invariants: Supported currency check, non-empty name, trims whitespace.
+4. **Use Case: `TransferFundsUseCase`:**
+   - Invariant: `if (fromWallet.currency !== toWallet.currency) throw new CurrencyMismatchTransferError()`.
+   - Financial Math: Strictly 1:1 (`amountTransferred === receivedAmount`, `effectiveRate === 1.0`).
+   - Audit Record: Strictly emit `type: 'TRANSFER_OUT'` and `type: 'TRANSFER_IN'` (never `CONVERT_*`).
+5. **Use Case: `ConvertFundsUseCase` Cross-Currency Invariant:**
+   - Invariant: `if (fromWallet.currency === toWallet.currency) throw new SameCurrencyConversionError()`.
+   - Prevents artificial 1:1 rates in FX conversion; reserves same-currency movements strictly for `TransferFundsUseCase`.
+
+### 2.2 Track B: REST API Endpoints
+| Method | Path | Payload | Success Response |
+|---|---|---|---|
+| `POST` | `/api/wallets` | `{ currency: string, name: string }` | `{ success: true, data: { wallet } }` |
+| `POST` | `/api/wallets/transfer` | `{ fromWalletId, toWalletId, amount, notes }` | `{ success: true, data: { referenceId, ... } }` |
+
+### 2.3 Track C: UI & Frontend Transformation
+1. **Horizontal Scrollable Carousel (`WalletCardGrid.tsx`):**
+   - Replace rigid vertical/5-column grid with a scrollable card row: `flex gap-4 overflow-x-auto pb-4 scrollbar-thin`.
+   - Include currency filter chips at top: `[All] [USD] [EUR] [GBP] [SGD] [IDR]`.
+   - **Hybrid UX Pattern:** Primary quick-action button `[+ New Pocket]` situated directly in the header toolbar (accessible instantaneously without scrolling or filter restrictions), complemented by an interactive dashed `+ New Sub-Pocket` card at the carousel tail as secondary visual affordance.
+2. **Create Wallet Modal Dialog:**
+   - Form fields: Currency selector dropdown (`USD`, `EUR`, `GBP`, `SGD`, `IDR`), Wallet Name/Label input (e.g., *"Emergency Fund"*, *"Trading Pocket"*).
+3. **Transfer Form Dropdown Guard:**
+   - In `WalletActionWorkbench.tsx` under `activeTab === 'transfer'`, automatically filter `toWalletOptions` to only list wallets sharing the same currency as `fromWallet`.
+4. **Submit Button Label Formatting:**
+   - Format source amount using currency-specific decimals:
+     `Convert ${numAmount.toLocaleString('en-US', { minimumFractionDigits: decimals })} ${fromWallet.currency}...`
+   - Resolves `Convert 1000000000 IDR...` ➔ `Convert 1,000,000,000 IDR...`.
+5. **Convert Form Dynamic Cross-Currency Guard:**
+   - In `WalletActionWorkbench.tsx` under `activeTab === 'convert'`, automatically filter `convertToOptions` to strictly exclude wallets sharing the same currency as `fromWallet`. Includes auto-fallback resolver so changing Sell pocket immediately aligns the Buy dropdown without invalid pairings.
+
+---
+
+## 🧪 3. Definition of Done (DoD) Checklist
+
+- [x] **A1:** Prisma schema updated without unique currency constraint; `name` column persisted.
+- [x] **A2:** `CreateWalletUseCase` implemented with complete validation rules.
+- [x] **A3:** `TransferFundsUseCase` enforces same-currency only and emits `TRANSFER_OUT` / `TRANSFER_IN`.
+- [x] **A4:** `ConvertFundsUseCase` enforces cross-currency invariant (`SameCurrencyConversionError`).
+- [x] **B1:** `POST /api/wallets` route handler operational with standard envelope.
+- [x] **C1:** Horizontal scrollable wallet cards with currency filter chips and Hybrid UX button (`[+ New Pocket]`).
+- [x] **C2:** `+ Add Wallet` modal functional and updates dashboard state on submission.
+- [x] **C3:** Transfer form guarantees only same-currency destinations can be selected.
+- [x] **C4:** Action submit button displays formatted thousand separators for all currencies.
+- [x] **C5:** Convert form dynamically excludes same-currency targets and auto-resolves selection.
+- [x] **D1:** All new unit tests written and passing (`npm test`).
+- [x] **D2:** Total test suite green with 0 regression errors.

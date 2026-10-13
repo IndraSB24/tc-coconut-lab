@@ -1,0 +1,102 @@
+---
+title: 'Phase 8: Reusable Masked Currency Input & Dynamic Thousand Separator'
+sidebar_label: Phase 8 - Masked Currency Input
+sidebar_position: 9
+---
+
+import Mermaid from '@site/src/components/Mermaid';
+
+<div className="page-header-wrapper">
+  <div className="page-badge">
+    <span className="status-badge status-badge--implemented">Status: Implemented</span>
+  </div>
+
+# ⌨️ Phase 8: Reusable Masked Currency Input & Dynamic Thousand Separator
+
+</div>
+
+> **Created at:** 2026-10-13 | **Updated at:** 2026-10-13 <br />
+> **Initiator:** Indra SB | **Last Auditor:** Indra SB
+
+> **Target Timeline:** Wave 8 (Fintech Input Masking & Component Reusability)  
+> **Status:** Completed (100% / 🟢)
+
+This phase eliminates raw HTML `<input type="number">` limitations across the workbench by extracting a dedicated, enterprise-grade reusable **Masked Currency Input** component (`CurrencyAmountInput.tsx`). It provides real-time thousand separators (`15,000,000`), eliminates premature auto-decimals, enforces zero-decimal invariants on `IDR`, and maintains clean unmasked numerical state propagation to domain forms.
+
+---
+
+## 🎯 1. Scope & Execution Tracks
+
+<Mermaid withCard chart={`graph TD
+    subgraph TrackA["Track A: Reusable Component Extraction"]
+        A1["CurrencyAmountInput.tsx with type=text and inputMode=decimal"]
+        A2["Dual-State Masking: Display String vs Raw Value"]
+        A3["Real-Time Thousand Separator Regex"]
+        A4["Zero-Decimal Guard for IDR: Decimal Point Stripping"]
+        A5["Visual Adornments: Currency Symbol Prefix, ISO Badge, Max Shortcut"]
+    end
+
+    subgraph TrackB["Track B: Workbench Form Integration"]
+        B1["Refactor Convert Tab with CurrencyAmountInput"]
+        B2["Refactor Transfer Tab with CurrencyAmountInput"]
+        B3["Refactor Deposit & Withdraw Tabs with CurrencyAmountInput"]
+        B4["Eliminate Premature Auto-Decimals in Yield Preview"]
+    end
+
+    subgraph TrackC["Track C: Level 2 Frontend Testing"]
+        C1["Create CurrencyAmountInput.test.tsx"]
+        C2["Verify Real-Time Thousand Formatting on Typing"]
+        C3["Verify Conscious Decimal Point Typing for Fiat"]
+        C4["Verify Decimal Suppression for IDR"]
+        C5["Update WalletActionWorkbench.test.tsx"]
+    end
+
+    subgraph TrackD["Track D: Quality Gate"]
+        D1["Full Vitest Test Suite Green"]
+        D2["Clean TypeScript Typecheck (0 Errors)"]
+    end
+
+    TrackA --> TrackB
+    TrackB --> TrackC
+    TrackC --> TrackD
+`} />
+
+---
+
+## 📋 2. Epic Task Checklist
+
+### 🧩 Track A: Component Extraction (`CurrencyAmountInput.tsx`)
+- [x] Create `src/components/wallet/CurrencyAmountInput.tsx` with controlled `value` and `onChange` interface
+- [x] Implement dual-state masking: format display string with commas while emitting sanitized raw numeric string
+- [x] Implement intentional decimal typing: decimal point (`.`) only appears when explicitly typed by user
+- [x] Enforce zero-decimal invariant: completely strip and reject `.` when currency is `IDR`
+- [x] Support visual currency prefix (`$`, `€`, `£`, `S$`, `Rp`), right-aligned currency badge, and optional "Max" balance button
+
+### 🎛️ Track B: Workbench Integration (`WalletActionWorkbench.tsx`)
+- [x] Replace hardcoded raw input in "You Convert (Sell Amount)" card
+- [x] Replace hardcoded raw input in "Transfer Amount" card
+- [x] Replace hardcoded raw input in "Deposit / Withdraw Amount" card
+- [x] Refactor "You Receive (Buy - Estimated)" to avoid premature `0.00` when amount is empty
+
+### 🧪 Track C: Level 2 Frontend Unit Testing
+- [x] Create `tests/frontend/CurrencyAmountInput.test.tsx` using `@testing-library/react` and `happy-dom`
+- [x] Test real-time thousand separator formatting (e.g. typing `15000000` renders `15,000,000`)
+- [x] Test conscious decimal typing on USD (e.g. typing `1250.5` renders `1,250.5` and caps at 2 decimals)
+- [x] Test zero-decimal guard on IDR (typing `.` does not insert decimals)
+- [x] Update `tests/frontend/WalletActionWorkbench.test.tsx` to align with the new masked input component
+
+### 🚀 Track D: Quality Gate & Verification
+- [x] Ensure all unit & component tests pass in Vitest sub-1s
+- [x] Verify zero TypeScript errors (`npx tsc --noEmit --incremental false`)
+
+---
+
+## 🧪 3. Verification Commands
+
+```bash
+# Execute unified Vitest test suite
+npm test
+
+# Run TypeScript typecheck
+npx tsc --noEmit --incremental false
+```

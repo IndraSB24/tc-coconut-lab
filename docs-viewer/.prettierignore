@@ -1,0 +1,13 @@
+# Build / Output folders
+dist/
+build/
+.docusaurus/
+
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+
+# Coverage & Logs
+coverage/
+*.log

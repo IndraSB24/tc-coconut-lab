@@ -1,0 +1,130 @@
+---
+title: 'Frontend Architecture: Pragmatic Components & The 4 UI States'
+sidebar_label: Frontend Architecture
+sidebar_position: 2
+---
+
+import Mermaid from '@site/src/components/Mermaid';
+
+<div className="page-header-wrapper">
+  <div className="page-badge">
+    <span className="status-badge status-badge--implemented">Status: Implemented</span>
+  </div>
+
+# 🖥️ Frontend Architecture: Pragmatic Components & The 4 UI States
+
+</div>
+
+> **Created at:** 2026-10-13 | **Updated at:** 2026-10-13 <br />
+> **Initiator:** Indra SB | **Last Auditor:** Indra SB
+
+This document defines the frontend architecture, component decomposition, and reactive state management for the **Multi-Currency Digital Wallet Workbench**. It emphasizes **pragmatic product delivery**, **zero over-engineering**, and exhaustive handling of all **4 Core UI States**.
+
+---
+
+## 🎯 1. Architectural Philosophy: Delivery-First & Pragmatic State
+
+In modern fintech engineering, user trust is determined by reliability and visual clarity rather than theoretical complexity. The frontend deliberately avoids heavy, over-engineered state libraries (e.g., Redux, Zustand) in favor of **idiomatic React primitives (`useState`, `useEffect`, `useCallback`)** and **unidirectional data flow**.
+
+```
+┌────────────────────────────────────────────────────────┐
+│  PRAGMATIC FRONTEND CORE TENETS                        │
+│  1. Unidirectional Data Flow: Page Orchestrator (SSOT) │
+│  2. Comprehensive 4 UI States: Load, Error, Empty, OK  │
+│  3. Real-Time Derived Yield: Zero unnecessary queries  │
+│  4. Keystroke Debouncing (250ms): Fluid search UX      │
+└────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 🏗️ 2. Component Decomposition (`src/components/wallet/`)
+
+The presentation layer decomposes the monolithic workbench into focused, decoupled components:
+
+<Mermaid withCard chart={`graph TD
+    Page["src/app/page.tsx<br/>(Smart Container & State Orchestrator)"]
+
+    Page --> Nav["Navbar<br/>(Brand & Simulated User Badge)"]
+    Page --> Comp1["PortfolioOverview<br/>(Net Worth & Live FX Ticker)"]
+    Page --> Comp2["WalletCardGrid<br/>(Multi-Currency Cards, Filter Chips & [+ New Pocket])"]
+    Page --> Comp3["WalletActionWorkbench<br/>(Convert, Transfer, Deposit, Withdraw Tabs)"]
+    Page --> Comp4["LedgerAuditTable<br/>(DataTable with Debounced Search & Filters)"]
+    Page --> Comp5["TransactionDetailModal<br/>(Audit Inspection & Correlation Reference)"]
+    Page --> Comp6["CreateWalletModal<br/>(Dynamic Sub-Wallet / Pocket Creator)"]
+`} />
+
+### Component Boundaries & Responsibilities:
+
+| Component | Responsibility | State Role |
+| :--- | :--- | :--- |
+| **`page.tsx`** | Container orchestrator; fetches `/api/wallets`, `/api/rates`, `/api/transactions`. | **Single Source of Truth (SSOT)** |
+| **`PortfolioOverview`** | Displays base USD net worth & live ticker rates. | Presentational (receives `totalUsd`, `rates`, `isLoading`) |
+| **`WalletCardGrid`** | Renders scrollable multi-currency cards with formatted balances, currency filter chips, and `[+ New Pocket]` trigger. | Presentational (receives `wallets`, `onSelectWallet`) |
+| **`WalletActionWorkbench`** | 2-Column operations workbench (Interactive transaction form on left, Live Ledger Intelligence & Transparency Card on right). | Controlled Form (receives form props & `getSelectedConversionRate`) |
+| **`LedgerAuditTable`** | Wraps `DataTable` with wallet/type filters and inspect action. | Filtered Presentational (receives `transactions`, `isLoading`) |
+| **`DataTable`** | Reusable table with 250ms debounced search, sorting, and pagination. | Headless Presentational (`debounceMs={250}`) |
+| **`TransactionDetailModal`** | Deep-dive modal inspect for transaction reference & exchange rate. | Modal Overlay (receives `selectedTx`, `onClose`) |
+| **`CreateWalletModal`** | Modal dialog to dynamically create and name sub-wallets/pockets per currency. | Controlled Modal (receives `isOpen`, `onClose`, `onCreated`) |
+
+---
+
+## 🛡️ 3. Exhaustive Handling of The 4 Core UI States
+
+A production-grade application must deliver graceful visual feedback across all operational scenarios:
+
+<Mermaid withCard chart={`graph LR
+    subgraph UI_States ["The 4 Essential UI States"]
+        S1["1. Loading State<br/>• Mount Spinner<br/>• Action Button Spinner<br/>• Table Sync Indicator"]
+        S2["2. Error State<br/>• Toast Notification<br/>• Insufficient Balance Guard<br/>• Network Error Catch"]
+        S3["3. Empty State<br/>• Icon Graphic<br/>• 'No records found' Text<br/>• Filter Clear Prompt"]
+        S4["4. Success State<br/>• Instant Balance Update<br/>• Correlated Ledger Row<br/>• Form Field Reset"]
+    end
+`} />
+
+### 1. Loading State (Zero Layout Shift)
+- **Initial Hydration:** Fullscreen centered indicator prevents flickering before wallets are loaded.
+- **Form Submission:** Submit buttons show `<RefreshCw className="animate-spin" />` with *"Processing Invariants..."* and disable input fields to prevent double-clicks.
+- **Ledger Synchronization:** `DataTable` displays an animated sync indicator while `/api/transactions` is actively querying.
+
+### 2. Error State (Transparent Financial Feedback)
+- **Domain Invariants:** If a withdrawal exceeds available funds, `InsufficientBalanceError` returns HTTP 422 and renders a high-visibility rose-tinted toast.
+- **Negative / Zero Input:** The action button enforces positive numbers (`> 0`) and blocks submission before making network calls.
+- **Network Resilience:** API gateway failures fall back to in-memory triangular arbitrage rates without crashing the UI.
+
+### 3. Empty State (Actionable Guidance)
+- When no transaction records match active search or dropdown filters, the table renders an illustrated empty view (`ReceiptText` icon) with:
+  - Title: *"No transaction records found matching filters."*
+  - Subtext: *"Adjust wallet/type filters or search query to find records."*
+
+### 4. Success State (Immediate Reconciliation)
+- Successful mutations immediately display a green toast displaying the generated correlation `referenceId`.
+- The form clears its input amount and triggers an atomic `refreshAll()` to update wallet balance cards and append the new ledger record.
+
+---
+
+## ⚡ 4. UX & Performance Optimizations
+
+### 1. Keystroke Debouncing (`debounceMs = 250`)
+To prevent heavy array filtering and DOM re-renders on every keystroke, the `DataTable` search input utilizes a 250ms debounce timer via `useEffect`:
+- When typing *"Delta"*, filter evaluation only executes after typing pauses for 250ms.
+- Verified by automated tests using `vi.useFakeTimers()` and `vi.advanceTimersByTime(250)`.
+
+### 2. Real-Time Derived Yield Preview
+```text
+Estimated Yield = Sell Amount × Mid-Market Rate
+```
+- Computed purely on the client side via `getSelectedConversionRate()` in zero milliseconds.
+- Requires zero API round-trips while the user is typing, guaranteeing 60fps responsive typing.
+
+---
+
+## 🧪 5. Testing & Verification
+
+The frontend architecture is safeguarded by **37 dedicated Vitest component tests** running in `happy-dom`:
+- **`DataTable.test.tsx` (8 tests):** Validates column sorting, pagination controls, loading state, empty state, and debounced search filtering.
+- **`LedgerAuditTable.test.tsx` (4 tests):** Validates filter badge rendering, empty state prompt, loading synchronization, and modal inspection triggers.
+- **`WalletActionWorkbench.test.tsx` (7 tests):** Validates tab switching, currency swapping, max-balance button, dynamic submit button labels, same-currency transfer filtering, and IDR-to-EUR micro-rate yield precision.
+- **`WalletCardGrid.test.tsx` (3 tests):** Validates multi-currency card renderings, selection events, and `[+ New Pocket]` modal trigger button.
+- **`CurrencyAmountInput.test.tsx` (8 tests):** Validates currency symbol prefixes, balance display, and positive number formatting.
+- **`CustomSelect.test.tsx` (7 tests):** Validates accessible keyboard navigation and custom dropdown state.

@@ -1,0 +1,352 @@
+---
+title: 'API Contracts: Multi-Currency Digital Wallet Endpoints'
+sidebar_label: Wallet API Endpoints
+sidebar_position: 1
+---
+
+<div className="page-header-wrapper">
+  <div className="page-badge">
+    <span className="status-badge status-badge--implemented">Status: Implemented</span>
+  </div>
+
+# 🔌 API Contracts: Multi-Currency Digital Wallet Endpoints
+
+</div>
+
+> **Created at:** 2026-10-13 | **Updated at:** 2026-10-14 <br />
+> **Initiator:** Indra SB | **Last Auditor:** Indra SB
+
+This document defines the HTTP request/response payloads, route parameters, status codes, and JSON schemas for all REST API endpoints of the digital wallet application.
+
+---
+
+## 📡 1. Standard API Envelope
+
+All endpoints encapsulate payloads within a standardized JSON response envelope (`apiSuccess` and `apiError`):
+
+### Success Response (HTTP 200 / 201):
+```json
+{
+  "success": true,
+  "data": { ... },
+  "error": null,
+  "meta": {
+    "timestamp": "2026-10-13T14:30:00.000Z"
+  }
+}
+```
+
+### Error Response (HTTP 400 / 404 / 422 / 500 / 502):
+```json
+{
+  "success": false,
+  "data": null,
+  "error": {
+    "code": "INSUFFICIENT_BALANCE",
+    "message": "USD wallet balance is insufficient for withdrawal of $150.00 (Current balance: $100.00)"
+  },
+  "meta": {
+    "timestamp": "2026-10-13T14:30:00.000Z"
+  }
+}
+```
+
+---
+
+## 📋 2. Endpoint Specifications
+
+### 2.1 `GET /api/wallets`
+Retrieve all wallets for the simulated user, their current balances, and total estimated portfolio value in USD.
+- **Request:** None.
+- **Response Data (HTTP 200):**
+  ```json
+  {
+    "userId": "user-simulated",
+    "user": {
+      "id": "user-simulated",
+      "name": "Indra SB",
+      "email": "indra@coconut.io"
+    },
+    "totalPortfolioEstimatedUsd": 2450.75,
+    "wallets": [
+      {
+        "id": "wallet-usd",
+        "userId": "user-simulated",
+        "currency": "USD",
+        "balance": 1000.00,
+        "name": "USD Main",
+        "status": "ACTIVE"
+      },
+      {
+        "id": "wallet-eur",
+        "userId": "user-simulated",
+        "currency": "EUR",
+        "balance": 500.00,
+        "name": "Main",
+        "status": "ACTIVE"
+      },
+      {
+        "id": "wallet-sgd",
+        "userId": "user-simulated",
+        "currency": "SGD",
+        "balance": 350.50,
+        "name": "Main",
+        "status": "ACTIVE"
+      },
+      {
+        "id": "wallet-idr",
+        "userId": "user-simulated",
+        "currency": "IDR",
+        "balance": 15000000,
+        "name": "Main",
+        "status": "ACTIVE"
+      }
+    ]
+  }
+  ```
+
+---
+
+### 2.2 `POST /api/wallets`
+Dynamically create a new sub-wallet (pocket) for the simulated user.
+- **Request Body:**
+  ```json
+  {
+    "currency": "USD",
+    "name": "USD Savings"
+  }
+  ```
+- **Response Data (HTTP 201):**
+  ```json
+  {
+    "wallet": {
+      "id": "cm123abc456",
+      "userId": "user-simulated",
+      "currency": "USD",
+      "balance": 0,
+      "name": "USD Savings",
+      "status": "ACTIVE",
+      "createdAt": "2026-10-13T16:00:00.000Z",
+      "updatedAt": "2026-10-13T16:00:00.000Z"
+    }
+  }
+  ```
+- **Error Responses:**
+  - `HTTP 400 (UNSUPPORTED_CURRENCY)`: Currency code not in `[USD, EUR, GBP, SGD, IDR]`.
+  - `HTTP 400 (INVALID_ARGUMENT)`: Pocket name is empty or exceeds limit.
+
+---
+
+### 2.3 `POST /api/wallets/[id]/deposit`
+Deposit simulated funds into a specified wallet.
+- **Route Parameter:** `id` (e.g. `wallet-usd`)
+- **Request Body:**
+  ```json
+  {
+    "amount": 250.00,
+    "notes": "Optional top-up memo"
+  }
+  ```
+- **Response Data (HTTP 200):**
+  ```json
+  {
+    "wallet": {
+      "id": "wallet-usd",
+      "currency": "USD",
+      "balance": 1250.00
+    },
+    "transaction": {
+      "id": "tx-dep-01",
+      "type": "DEPOSIT",
+      "amount": 250.00,
+      "currency": "USD",
+      "balanceAfter": 1250.00,
+      "referenceId": "dep-1728833520000",
+      "createdAt": "2026-10-13T14:32:00.000Z"
+    }
+  }
+  ```
+
+---
+
+### 2.4 `POST /api/wallets/[id]/withdraw`
+Withdraw funds from a specified wallet, guarded against overdrafts.
+- **Route Parameter:** `id` (e.g. `wallet-eur`)
+- **Request Body:**
+  ```json
+  {
+    "amount": 100.00,
+    "notes": "ATM cash-out simulation"
+  }
+  ```
+- **Response Data (HTTP 200):**
+  ```json
+  {
+    "wallet": {
+      "id": "wallet-eur",
+      "currency": "EUR",
+      "balance": 400.00
+    },
+    "transaction": {
+      "id": "tx-wth-01",
+      "type": "WITHDRAWAL",
+      "amount": 100.00,
+      "currency": "EUR",
+      "balanceAfter": 400.00,
+      "referenceId": "wth-1728833580000",
+      "createdAt": "2026-10-13T14:33:00.000Z"
+    }
+  }
+  ```
+
+---
+
+### 2.5 `POST /api/wallets/convert`
+Convert funds from a source wallet to a target wallet across different currencies using live rates from the Frankfurter API.
+- **Request Body:**
+  ```json
+  {
+    "fromWalletId": "wallet-usd",
+    "toWalletId": "wallet-eur",
+    "amount": 100.00,
+    "notes": "Currency conversion for upcoming travel"
+  }
+  ```
+- **Response Data (HTTP 200):**
+  ```json
+  {
+    "referenceId": "ref-conv-abc123xyz",
+    "rate": 0.9215,
+    "sourceDebit": {
+      "walletId": "wallet-usd",
+      "currency": "USD",
+      "amountDebited": 100.00,
+      "newBalance": 1150.00
+    },
+    "targetCredit": {
+      "walletId": "wallet-eur",
+      "currency": "EUR",
+      "amountCredited": 92.15,
+      "newBalance": 492.15
+    },
+    "provider": "frankfurter",
+    "timestamp": "2026-10-13T14:35:00.000Z"
+  }
+  ```
+- **Error Responses:**
+  - `HTTP 400 (SAME_CURRENCY_CONVERSION_PROHIBITED)`: Source and destination wallets share the identical currency. Must use `POST /api/wallets/transfer`.
+
+---
+
+### 2.6 `POST /api/wallets/transfer`
+Transfer funds strictly between wallets of the **same currency** (intra-currency 1:1 accounting, e.g. `USD Main` to `USD Savings`).
+- **Request Body:**
+  ```json
+  {
+    "fromWalletId": "wallet-usd",
+    "toWalletId": "wallet-usd-savings",
+    "amount": 50.00,
+    "notes": "Allowance transfer"
+  }
+  ```
+- **Response Data (HTTP 200):**
+  ```json
+  {
+    "referenceId": "ref-txf-456def",
+    "fromWallet": { "id": "wallet-usd", "currency": "USD", "balance": 950.00, "name": "Main" },
+    "toWallet": { "id": "wallet-usd-savings", "currency": "USD", "balance": 50.00, "name": "USD Savings" },
+    "amountTransferred": 50.00,
+    "effectiveRate": 1.0,
+    "receivedAmount": 50.00
+  }
+  ```
+- **Error Responses:**
+  - `HTTP 400 (CURRENCY_MISMATCH_TRANSFER)`: Thrown if `fromWallet.currency !== toWallet.currency`. Cross-currency transfers must execute via `POST /api/wallets/convert`.
+  - `HTTP 400 (SELF_TRANSFER_PROHIBITED)`: Source and destination wallet IDs are identical.
+  - `HTTP 422 (INSUFFICIENT_BALANCE)`: Available balance is lower than transfer amount.
+
+---
+
+### 2.7 `GET /api/rates`
+Retrieve live foreign exchange rate from Frankfurter API (cached with 60s TTL).
+- **Query Parameters:** `base` (default: `USD`), `quote` (default: `EUR`).
+- **Response Data (HTTP 200):**
+  ```json
+  {
+    "base": "USD",
+    "quote": "EUR",
+    "rate": 0.9215,
+    "cached": true,
+    "timestamp": "2026-10-13T14:35:00.000Z",
+    "provider": "frankfurter"
+  }
+  ```
+
+---
+
+### 2.8 `GET /api/transactions`
+Retrieve the transaction history ledger with filtering options.
+- **Query Parameters:** `walletId` (optional), `type` (optional), `limit` (default: 50).
+- **Response Data (HTTP 200):**
+  ```json
+  {
+    "total": 12,
+    "transactions": [
+      {
+        "id": "tx-conv-01",
+        "walletId": "wallet-usd",
+        "type": "CONVERT_OUT",
+        "amount": 100.00,
+        "currency": "USD",
+        "balanceAfter": 1150.00,
+        "referenceId": "ref-conv-abc123xyz",
+        "counterpartyWalletId": "wallet-eur",
+        "counterpartyCurrency": "EUR",
+        "exchangeRate": 0.9215,
+        "createdAt": "2026-10-13T14:35:00.000Z"
+      }
+    ]
+  }
+  ```
+
+---
+
+### 2.9 `GET /api/transactions/[id]`
+Inspect individual transaction details by transaction ID.
+- **Route Parameter:** `id` (e.g. `tx-conv-01`)
+- **Response Data (HTTP 200):**
+  ```json
+  {
+    "transaction": {
+      "id": "tx-conv-01",
+      "walletId": "wallet-usd",
+      "type": "CONVERT_OUT",
+      "amount": 100.00,
+      "currency": "USD",
+      "balanceAfter": 1150.00,
+      "referenceId": "ref-conv-abc123xyz",
+      "counterpartyWalletId": "wallet-eur",
+      "counterpartyCurrency": "EUR",
+      "exchangeRate": 0.9215,
+      "notes": "Converted 100 USD to 92.15 EUR at rate 0.9215",
+      "createdAt": "2026-10-13T14:35:00.000Z"
+    }
+  }
+  ```
+
+---
+
+### 2.10 `GET /api/health`
+Operational liveness & readiness health probe providing runtime signature, framework version, persistence driver, and architecture metadata.
+- **Request:** None.
+- **Response Data (HTTP 200):**
+  ```json
+  {
+    "status": "ONLINE",
+    "engine": "Next.js 16 App Router",
+    "database": "SQLite (Prisma ORM)",
+    "architecture": "Clean Architecture / DDD",
+    "timestamp": "2026-10-14T01:30:00.000Z"
+  }
+  ```
+

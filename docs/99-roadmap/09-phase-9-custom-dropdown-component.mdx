@@ -1,0 +1,103 @@
+---
+title: 'Phase 9: Reusable Fintech Glassmorphic CustomSelect Component'
+sidebar_label: Phase 9 - CustomSelect Component
+sidebar_position: 10
+---
+
+import Mermaid from '@site/src/components/Mermaid';
+
+<div className="page-header-wrapper">
+  <div className="page-badge">
+    <span className="status-badge status-badge--implemented">Status: Implemented</span>
+  </div>
+
+# 🎨 Phase 9: Reusable Fintech Glassmorphic CustomSelect Component
+
+</div>
+
+> **Created at:** 2026-10-13 | **Updated at:** 2026-10-13 <br />
+> **Initiator:** Indra SB | **Last Auditor:** Indra SB
+
+> **Target Timeline:** Wave 9 (Fintech UI Design System & Component Modernization)  
+> **Status:** Completed (100% / 🟢)
+
+This phase elevates the wallet application's visual polish by replacing raw browser-native `<select>` tags with a dedicated, enterprise-grade **Reusable Glassmorphic CustomSelect** component (`CustomSelect.tsx`). It introduces color-coded currency avatar pills, right-aligned monospaced balance displays, smooth rotating chevron interactions, floating glassmorphic popover overlays (`z-50`), click-outside/escape dismissal guards, and Level 2 component unit test coverage.
+
+---
+
+## 🎯 1. Scope & Execution Tracks
+
+<Mermaid withCard chart={`graph TD
+    subgraph TrackA["Track A: Reusable CustomSelect Extraction"]
+        A1["CustomSelect.tsx with Generic Option Model"]
+        A2["Sleek Trigger Card with Currency Pill & Monospace Balance"]
+        A3["Floating Glassmorphic Popover Menu with z-50"]
+        A4["Click-Outside & Escape Key Dismissal Handlers"]
+        A5["Checkmark on Active Item & Subtle Hover Glow"]
+    end
+
+    subgraph TrackB["Track B: Workbench & Filter Integration"]
+        B1["Refactor Convert Tab From & To Wallet Dropdowns"]
+        B2["Refactor Transfer Tab Debit & Credit Dropdowns"]
+        B3["Refactor Deposit & Withdraw Target Wallet Dropdown"]
+        B4["Refactor Ledger Audit Filter Dropdowns (Compact Mode)"]
+    end
+
+    subgraph TrackC["Track C: Level 2 Frontend Testing"]
+        C1["Create CustomSelect.test.tsx with happy-dom"]
+        C2["Test Popover Toggle & Option Rendering"]
+        C3["Test Option Selection & onChange State Emission"]
+        C4["Test Click-Outside & Escape Key Closing"]
+    end
+
+    subgraph TrackD["Track D: Quality Gate"]
+        D1["Full Vitest Test Suite Green"]
+        D2["Clean TypeScript Typecheck (0 Errors)"]
+    end
+
+    TrackA --> TrackB
+    TrackB --> TrackC
+    TrackC --> TrackD
+`} />
+
+---
+
+## 📋 2. Epic Task Checklist
+
+### 🧩 Track A: Component Extraction (`CustomSelect.tsx`)
+- [x] Create `src/components/wallet/CustomSelect.tsx` with generic `<T = string>` props
+- [x] Define `CustomSelectOption<T>` interface supporting `value`, `label`, optional `sublabel` (e.g. formatted balance), `badge` (e.g. ISO code), `badgeColor`, and `icon`
+- [x] Implement styled trigger button (`bg-slate-900 border-slate-700 hover:border-indigo-500/50`) featuring active selection preview and rotating `ChevronDown` (`rotate-180`)
+- [x] Implement floating glassmorphic popover overlay (`backdrop-blur-xl bg-slate-900/95 border-slate-700/80 shadow-2xl rounded-2xl z-50`)
+- [x] Add UX dismissal guards: `useRef` + `useEffect` window click-outside listener and keyboard `Escape` key handler
+- [x] Render active checkmark icon (`Check`) and keyboard accessibility focus rings
+
+### 🎛️ Track B: Workbench & Ledger Integration
+- [x] Replace native `<select>` in **Convert Tab** ("From Wallet" & "To Wallet") with rich `CustomSelect`
+- [x] Replace native `<select>` in **Transfer Tab** ("From Wallet" & "To Wallet") with rich `CustomSelect`
+- [x] Replace native `<select>` in **Deposit / Withdraw Tabs** ("Target Wallet") with rich `CustomSelect`
+- [x] Replace native `<select>` in **Ledger Audit Table** filter controls using compact `CustomSelect` variant
+
+### 🧪 Track C: Level 2 Frontend Unit Testing
+- [x] Create `tests/frontend/CustomSelect.test.tsx` using `@testing-library/react` and `happy-dom`
+- [x] Test trigger rendering with active option label, currency badge, and formatted balance
+- [x] Test popover opening upon trigger click and displaying all options
+- [x] Test option click firing `onChange` with correct value and closing popover
+- [x] Test click-outside dismissal and `Escape` key closure
+- [x] Update existing `WalletActionWorkbench.test.tsx` and `LedgerAuditTable.test.tsx` for full test regression pass
+
+### 🚀 Track D: Quality Gate & Verification
+- [x] Ensure all unit & component tests pass in Vitest sub-1s
+- [x] Verify zero TypeScript errors (`npx tsc --noEmit --incremental false`)
+
+---
+
+## 🧪 3. Verification Commands
+
+```bash
+# Execute unified Vitest test suite
+npm test
+
+# Run TypeScript typecheck
+npx tsc --noEmit --incremental false
+```

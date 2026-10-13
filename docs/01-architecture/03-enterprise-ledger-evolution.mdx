@@ -1,0 +1,160 @@
+---
+title: 'Enterprise Architecture Evolution: Normalized Double-Entry & FX Engine'
+sidebar_label: Enterprise Ledger Evolution
+sidebar_position: 3
+---
+
+import Mermaid from '@site/src/components/Mermaid';
+
+<div className="page-header-wrapper">
+  <div className="page-badge">
+    <span className="status-badge status-badge--plan">Status: Plan</span>
+  </div>
+
+# 🏛️ Enterprise Architecture Evolution: Normalized Double-Entry & FX Engine
+
+</div>
+
+> **Created at:** 2026-10-13 | **Updated at:** 2026-10-13 <br />
+> **Initiator:** Indra SB | **Last Auditor:** Indra SB
+
+This document outlines the **Tier-1 Core Banking Evolution Blueprint** for the Multi-Currency Digital Wallet engine. It details how the current pragmatic *Correlated Single-Table Ledger* architecture scales into a fully normalized, high-throughput financial accounting system inspired by global fintech infrastructures (such as Stripe, Wise, and Revolut).
+
+---
+
+## 🎯 1. Architectural Motivation & Evolution Strategy
+
+In live coding challenges and early-stage MVPs, engineering teams typically implement a **Correlated Double-Entry Ledger** (our current model):
+- A single `Transaction` table stores both sides of an inter-wallet mutation (`DEBIT` and `CREDIT`) bound together via a shared correlation identifier (`referenceId`).
+- This keeps query latency sub-millisecond, ensures zero-dependency in-memory test execution (`<300ms`), and prevents unnecessary table JOIN locks in SQLite.
+
+However, as transactional throughput scales to millions of concurrent ledger mutations across multi-tenant environments, production banking compliance mandates strict **Separation of Intent vs. Accounting Postings**, **Optimistic Concurrency Control (OCC)**, **Network Idempotency**, and **Decoupled FX Rate Audit Provenance**.
+
+---
+
+## 📊 2. Enterprise Relational ERD Blueprint (6-Table Architecture)
+
+The following entity relationship diagram formalizes the target enterprise schema:
+
+<Mermaid withCard chart={`erDiagram
+    USERS ||--o{ WALLETS : "memiliki"
+    USERS ||--o{ TRANSACTIONS : "melakukan"
+    CURRENCIES ||--o{ WALLETS : "mata uang"
+    CURRENCIES ||--o{ FX_CONVERSIONS : "from/to"
+    WALLETS ||--o{ TRANSACTIONS : "source/target"
+    WALLETS ||--o{ LEDGER_ENTRIES : "mutasi"
+    TRANSACTIONS ||--|{ LEDGER_ENTRIES : "terdiri"
+    TRANSACTIONS ||--o| FX_CONVERSIONS : "kurs (convert)"
+
+    USERS {
+        uuid id PK
+        varchar name
+        timestamptz created_at
+    }
+
+    CURRENCIES {
+        char code PK
+        varchar name
+        smallint decimals
+        boolean is_active
+    }
+
+    WALLETS {
+        uuid id PK
+        uuid user_id FK
+        char currency_code FK
+        varchar name
+        numeric balance
+        int version
+    }
+
+    TRANSACTIONS {
+        uuid id PK
+        uuid user_id FK
+        enum type "TRANSFER, CONVERT, DEPOSIT, WITHDRAW"
+        enum status "PENDING, SETTLED, FAILED, REVERSED"
+        uuid source_wallet_id FK
+        uuid target_wallet_id FK
+        numeric source_amount
+        numeric target_amount
+        varchar idempotency_key UK
+        timestamptz created_at
+    }
+
+    LEDGER_ENTRIES {
+        uuid id PK
+        uuid transaction_id FK
+        uuid wallet_id FK
+        enum direction "DEBIT, CREDIT"
+        numeric amount
+        numeric balance_before
+        numeric balance_after
+    }
+
+    FX_CONVERSIONS {
+        uuid transaction_id PK, FK
+        char from_currency FK
+        char to_currency FK
+        numeric rate
+        date rate_date
+        varchar provider "frankfurter, ecb"
+    }
+`} />
+
+---
+
+## ⚙️ 3. Core Enterprise Architectural Invariants
+
+### 3.1 Separation of Business Intent vs. Accounting Postings
+1. **The `TRANSACTIONS` Table (Business Event):**
+   - Captures **what the user intended to do** (`type = 'TRANSFER'` or `'CONVERT'`), the participant wallets (`source_wallet_id`, `target_wallet_id`), the requested amounts, and the execution lifecycle state (`PENDING` ➔ `SETTLED`).
+2. **The `LEDGER_ENTRIES` Table (Immutable Double-Entry Truth):**
+   - Pure immutable accounting journal. It records strictly atomic debit and credit lines (`direction: DEBIT | CREDIT`) for each involved wallet.
+   - Enforces point-in-time mathematical reconciliation via explicit `balance_before` and `balance_after` columns.
+   - **Zero-Sum Ledger Guarantee:**
+     For same-currency transfers: `SUM(amount WHERE direction = CREDIT) - SUM(amount WHERE direction = DEBIT) = 0`.
+
+### 3.2 Optimistic Concurrency Control (OCC via `version`)
+To guard against concurrent race conditions (e.g., dual clicks or simultaneous API requests draining a balance):
+- The `WALLETS` entity maintains an integer `version` field.
+- Database balance updates execute with conditional CAS (Compare-And-Swap) logic:
+  ```sql
+  UPDATE wallets 
+  SET balance = balance - :debitAmount, version = version + 1 
+  WHERE id = :walletId AND version = :currentVersion;
+  ```
+- If rows affected equals `0`, a `ConcurrentModificationError` is thrown, triggering a retry or safe rollback.
+
+### 3.3 Network Idempotency Guard (`idempotency_key`)
+- In distributed microservice topologies, client retries over flaky networks can resend debit commands.
+- The unique constraint `@@unique([idempotency_key])` on `TRANSACTIONS` guarantees that identical payloads received within the deduplication window return the cached original response without re-executing balance mutations.
+
+### 3.4 Decoupled FX Conversion Auditing (`FX_CONVERSIONS`)
+- Storing currency conversion rates as a dedicated 1:1 relation to the business transaction decouples exchange rate provenance (provider, rate date, quote timestamp, applied spread) from core ledger postings.
+- Transfers executed within the same currency omit the `FX_CONVERSIONS` record entirely, keeping same-currency transfers 100% free of FX overhead.
+
+---
+
+## 📈 4. Pragmatic Comparison: Current MVP vs. Enterprise Target
+
+```text
++----------------------------+-----------------------------------+-----------------------------------+
+| Architectural Metric       | Current Implementation (MVP)      | Enterprise Evolution Target       |
++----------------------------+-----------------------------------+-----------------------------------+
+| Primary Pattern            | Correlated Single-Table Ledger    | Normalized Multi-Table Ledger     |
+| Persistence Model          | User, Wallet, Transaction (3 tbls)| 6 Normalized Tables               |
+| Concurrency Control        | Domain Memory Guard (Unit Tests)  | Version Column Optimistic Lock    |
+| FX Storage                 | Denormalized Columns on Tx        | Dedicated FX_CONVERSIONS Table    |
+| Multi-Account per Currency | Enabled in Phase 11 (by name)     | Fully Dynamic via CURRENCIES FK   |
+| Test Execution Latency     | Ultra-fast (<300ms in-memory)     | Microservice Mocking Overhead     |
+| Best Suited For            | Technical Challenges, MVPs, POCs  | Tier-1 Scaled Core Banking        |
++----------------------------+-----------------------------------+-----------------------------------+
+```
+
+---
+
+## 🏁 5. Conclusion & Presentation Strategy
+
+This architectural blueprint demonstrates to senior technical interviewers and stakeholders that:
+1. **The current implementation is deliberately chosen** for optimal agility, zero test latency, and clean encapsulation without premature optimization.
+2. **The engineering path toward enterprise scale is fully understood**, mapped, and ready for execution when regulatory, multi-tenancy, and high-concurrency demands require it.

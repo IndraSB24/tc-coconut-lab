@@ -1,0 +1,88 @@
+---
+title: 'Phase 5: Frontend Component & State Interaction Unit Testing'
+sidebar_label: Phase 5 - Frontend Testing
+sidebar_position: 6
+---
+
+import Mermaid from '@site/src/components/Mermaid';
+
+<div className="page-header-wrapper">
+  <div className="page-badge">
+    <span className="status-badge status-badge--implemented">Status: Implemented</span>
+  </div>
+
+# 🧪 Phase 5: Frontend Component & State Interaction Unit Testing
+
+</div>
+
+> **Created at:** 2026-10-13 | **Updated at:** 2026-10-13 <br />
+> **Initiator:** Indra SB | **Last Auditor:** Indra SB
+
+> **Target Timeline:** Wave 5 (Frontend Testing & Verification)  
+> **Status:** Implemented (100% / Completed)
+
+This phase addresses the frontend test coverage gap by establishing pure in-memory component and state interaction unit tests without requiring heavyweight E2E browsers or Playwright binaries.
+
+---
+
+## 🎯 1. Scope & Execution Tracks
+
+<Mermaid withCard chart={`graph TD
+    subgraph Setup["Track A: Test Harness Configuration"]
+        S1["Vitest DOM Environment (happy-dom)"]
+        S2["React Testing Library Integration"]
+    end
+
+    subgraph Tests["Track B: Component & State Suites"]
+        T1["WalletCardGrid.test.tsx<br/>5 Currency Cards & Selection Interaction"]
+        T2["LedgerAuditTable.test.tsx<br/>Filter Dropdowns & Empty State Guards"]
+        T3["WalletActionWorkbench.test.tsx<br/>Tab Switching & Dynamic Estimation Quotes"]
+    end
+
+    subgraph Verification["Track C: Full Regression"]
+        V1["Vitest Unified Runner (Backend + Frontend)"]
+        V2["Sub-1s Test Execution Benchmark"]
+    end
+
+    Setup --> Tests
+    Tests --> Verification
+`} />
+
+---
+
+## 📋 2. Epic Task Checklist
+
+### ⚙️ Track A: Test Harness & Dependencies
+- [x] Configure Vitest for in-memory DOM simulation (`happy-dom`)
+- [x] Integrate `@testing-library/react` for React 19 component rendering
+
+### 🎨 Track B: Component & Interaction Test Suites
+- [x] `tests/frontend/WalletCardGrid.test.tsx`:
+  - Renders all 5 currency cards with respective symbols (`$`, `€`, `£`, `S$`, `¥`)
+  - Displays formatted balance and active badges
+  - Triggers `onSelectWallet` callback when a card is clicked
+- [x] `tests/frontend/LedgerAuditTable.test.tsx`:
+  - Renders filter controls by wallet and transaction type
+  - Displays empty state prompt when no transactions match filter
+  - Renders transaction rows with color-coded badges and triggers inspect callback
+- [x] `tests/frontend/WalletActionWorkbench.test.tsx`:
+  - Switches active tab (Convert, Transfer, Deposit, Withdraw)
+  - Displays dynamic indicative conversion calculation preview
+  - Toggles Max Available button in withdraw tab
+  - Handles form submission event passing correct input data
+
+### 🧪 Track C: Full Regression Verification
+- [x] Unified Vitest suite passes 100% across all backend and frontend specs (47/47 passing)
+- [x] Execution completes in sub-1s (634ms) without starting real browser binaries
+
+---
+
+## 🧪 3. Verification Commands
+
+```bash
+# Execute unified test suite (Backend + Frontend)
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+```

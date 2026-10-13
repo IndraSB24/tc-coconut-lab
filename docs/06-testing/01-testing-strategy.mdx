@@ -1,0 +1,88 @@
+---
+title: 'Testing Strategy & Quality Assurance: Multi-Currency Wallet'
+sidebar_label: Testing Strategy
+sidebar_position: 1
+---
+
+import Mermaid from '@site/src/components/Mermaid';
+
+<div className="page-header-wrapper">
+  <div className="page-badge">
+    <span className="status-badge status-badge--implemented">Status: Implemented</span>
+  </div>
+
+# 🧪 Testing Strategy & Quality Assurance: Multi-Currency Wallet
+
+</div>
+
+> **Created at:** 2026-10-13 | **Updated at:** 2026-10-13 <br />
+> **Initiator:** Indra SB | **Last Auditor:** Indra SB
+
+This document defines the automated testing philosophy, test suite coverage matrix, and quality assurance criteria guaranteeing the resilience of the simulated digital banking engine.
+
+---
+
+## ⚡ 1. Testing Philosophy & Budget
+
+1. **Sub-1s Unified Suite Target:** All pure domain entities, financial calculations, application use cases, and React frontend component interactions execute in under 1 second (observed ~940ms) using Vitest, enabling instantaneous TDD feedback loops.
+2. **In-Memory DOM Simulation (`happy-dom`):** Level 2 frontend UI component tests leverage `happy-dom` and `@testing-library/react` rather than heavy headless browser binaries (e.g. Playwright or Puppeteer). This eliminates cold-start latency and browser engine crashes while thoroughly testing real user interaction flows.
+3. **Zero External Network Dependence in CI:** Unit and use case tests never make live HTTP calls to the Frankfurter API during test runs. Instead, they leverage isolated in-memory repositories and mock exchange rate gateways with deterministic test fixtures.
+4. **Deterministic State Isolation:** Every test suite instantiates fresh in-memory repository instances (`InMemoryWalletRepository`, `InMemoryTransactionRepository`), eliminating state leakage between test cases.
+
+---
+
+## 🏗️ 2. Dual-Layer Fast Feedback Test Architecture
+
+<Mermaid withCard chart={`graph TD
+    subgraph TestPyramid ["Dual-Layer Fast Feedback Test Architecture (81 Tests Total)"]
+        L1["Level 1: Pure Domain & Application Use Cases<br/>(44 Tests • In-Memory Repositories • Sub-300ms)"]
+        L2["Level 2: Frontend Component & State Tests<br/>(37 Tests • happy-dom + Testing Library • Sub-700ms)"]
+    end
+
+    L1 --> L2
+`} />
+
+---
+
+## 🎯 3. Vitest Test Suite Matrix (81/81 Tests Passing)
+
+### 3.1 Backend Domain & Use-Case Test Matrix (44 Tests)
+
+| Test Suite File | Test Focus & Verification | Coverage Target | Status |
+|---|---|---|:---:|
+| `Wallet.spec.ts` | Entity encapsulation, negative balance prevention, strictly positive deposit/withdrawal validation, and currency decimal precision (`IDR` 0-decimal vs `USD` 2-decimal). | 100% domain rules | ✅ 8/8 Passed |
+| `DepositFunds.spec.ts` | Valid deposit execution, non-positive amount rejection (`amount <= 0`), non-existent wallet handling. | 100% path coverage | ✅ 3/3 Passed |
+| `WithdrawFunds.spec.ts` | Valid withdrawal, overdraft rejection (`InsufficientBalanceError`), non-positive amount rejection. | 100% path coverage | ✅ 4/4 Passed |
+| `ConvertFunds.spec.ts` | Multi-currency conversion via live/mock rates, source debit & target credit precision math, paired double-entry ledger persistence (`CONVERT_OUT` & `CONVERT_IN`), self-transfer rejection, and same-currency conversion rejection guard (`SameCurrencyConversionError`). | 100% path coverage | ✅ 7/7 Passed |
+| `TransferFunds.spec.ts` | Same-currency 1:1 wallet transfer, cross-currency transfer rejection (`CurrencyMismatchTransferError`), self-transfer rejection (`fromWalletId === toWalletId`), insufficient balance guard. | 100% path coverage | ✅ 5/5 Passed |
+| `FrankfurterGateway.spec.ts` | Identity rate bypass (1.0 for same currency), in-memory TTL caching verification, and offline triangular arbitrage fallback matrix. | 100% resilience | ✅ 4/4 Passed |
+| `GetWallets.spec.ts` | Query all wallets for user, portfolio balance map extraction, empty wallet handling. | 100% query coverage | ✅ 2/2 Passed |
+| `GetTransactions.spec.ts` | Ledger transaction listing, filtering by `walletId` and `type`, and individual transaction detail lookup by ID. | 100% query coverage | ✅ 5/5 Passed |
+| `CreateWallet.spec.ts` | Dynamic sub-wallet creation, currency invariant validation, custom pocket labeling, and wallet persistence. | 100% path coverage | ✅ 4/4 Passed |
+| `workbench.test.ts` | Domain error class inheritance, HTTP status code mapping (400, 404, 422), and unified API envelope structure verification. | 100% contract coverage | ✅ 2/2 Passed |
+
+### 3.2 Frontend Component & State Interaction Test Matrix (37 Tests)
+
+| Test Suite File | Test Focus & Verification | Coverage Target | Status |
+|---|---|---|:---:|
+| `WalletCardGrid.test.tsx` | Renders currency cards (`USD`, `EUR`, `GBP`, `SGD`, `IDR`) with accurate symbols, balances, active badges, click selection callback, and verifies Hybrid UX New Pocket quick action button trigger modal. | 100% component UI & selection event | ✅ 3/3 Passed |
+| `LedgerAuditTable.test.tsx` | Validates filter dropdown controls, transaction rows with color-coded type badges (`DEPOSIT`, `CONVERT_OUT`), empty state fallback prompt, loading sync indicator, and `onInspectTx` detail modal trigger. | 100% ledger table & filter interactions | ✅ 4/4 Passed |
+| `WalletActionWorkbench.test.tsx` | Validates tab navigation (Convert, Withdraw, Deposit), currency adornment (`Rp`), ⇄ Swap interaction, real-time conversion preview calculation, Max balance shortcut, contextual CTA submit handling, same-currency conversion dropdown filtering, and IDR-to-EUR micro-rate yield precision. | 100% interactive form & reactive state | ✅ 7/7 Passed |
+| `CurrencyAmountInput.test.tsx` | Validates real-time thousand separator masking (`15,000,000`), conscious decimal handling on fiat (`1,250.50`), zero-decimal suppression on IDR, and raw numeric string propagation to parents. | 100% masked input UX & state syncing | ✅ 8/8 Passed |
+| `CustomSelect.test.tsx` | Validates trigger button rendering with currency badges and monospace balances, popover open/close toggle, option selection firing onChange, checkmark on active item, click-outside and Escape key dismissal. | 100% reusable custom dropdown UX & interaction | ✅ 7/7 Passed |
+| `DataTable.test.tsx` | Validates generic table header/cell rendering, multi-state column sorting (asc/desc/reset), smart client-side pagination slicing, 250ms debounced search filtering, loading state indicator, empty state fallback, and toolbarSlot injection. | 100% reusable fintech datatable UX & logic | ✅ 8/8 Passed |
+
+---
+
+## 🚀 4. Test Execution Commands
+
+```bash
+# Execute full automated test suite (81 tests: 44 backend + 37 frontend in ~1s)
+npm test
+
+# Run tests in continuous watch mode
+npm --prefix app-core run test
+
+# Run TypeScript compilation checks
+npm --prefix app-core run typecheck
+```

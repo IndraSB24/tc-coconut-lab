@@ -1,0 +1,108 @@
+---
+title: 'Phase 12: High-Precision FX Rate Engine & Micro-Rate Underflow Resolution'
+sidebar_label: Phase 12 - FX Precision & Underflow
+sidebar_position: 13
+---
+
+import Mermaid from '@site/src/components/Mermaid';
+
+<div className="page-header-wrapper">
+  <div className="page-badge">
+    <span className="status-badge status-badge--implemented">Status: Implemented</span>
+  </div>
+
+# 💱 Phase 12: High-Precision FX Rate Engine & Micro-Rate Underflow Resolution
+
+</div>
+
+> **Created at:** 2026-10-13 | **Updated at:** 2026-10-13 <br />
+> **Initiator:** Indra SB | **Last Auditor:** Indra SB
+
+> **Target Timeline:** Wave 12 (Financial Precision & Micro-Rate Underflow Guard)  
+> **Status:** Completed (100% / 🟢)
+
+This phase addresses an insidious **floating-point underflow bug** that occurs when converting high-denomination currencies (e.g., `IDR` or `JPY`) into high-value currencies (`EUR`, `GBP`, `USD`). Inverting exchange rates where 1 USD ≈ 16,000 IDR produces micro-rates (≈ 0.0000475 - 0.000058 units per IDR). Under legacy 4-decimal truncation (`* 10000 / 10000`), these values round to exact zero (`0.0000`), causing conversion yields to evaluate to `0.00 EUR` and freezing transactions. 
+
+Phase 12 refactors the rate engine across backend resilience fallback, frontend live calculation, and adaptive UI ticker display to guarantee **8-decimal sub-unit precision (`10^-8`)**.
+
+---
+
+## 🎯 1. Scope & Execution Tracks
+
+<Mermaid withCard chart={`graph TD
+    subgraph TrackA["Track A: Backend Resilience & 8-Decimal Fallback"]
+        A1["FrankfurterExchangeRateService: Expand calculateFallbackRate to 8 decimals"]
+        A2["Precision Guard: Protect micro-rates (e.g. IDR to EUR: 0.0000531) from rounding to zero"]
+    end
+
+    subgraph TrackB["Track B: Frontend Real-Time Calculation & Adaptive Ticker"]
+        B1["page.tsx getSelectedConversionRate: Compute arbitrage with 8-decimal precision"]
+        B2["WalletActionWorkbench: Adaptive ticker display (show 6-8 decimals for rates under 0.01)"]
+        B3["Yield Accuracy: 10,000,000 IDR correctly calculates to €500+ instead of €0.00"]
+    end
+
+    subgraph TrackC["Track C: Automated Testing & Regression Verification"]
+        C1["FrankfurterGateway.spec.ts: Verify IDR to EUR and IDR to GBP fallback rates are non-zero"]
+        C2["WalletActionWorkbench.test.tsx: Verify accurate yield calculation and non-zero ticker"]
+        C3["Zero Regression: Pass full 80+ test matrix in Vitest"]
+    end
+
+    TrackA --> TrackB --> TrackC
+`} />
+
+---
+
+## 📋 2. Detailed Technical Specifications
+
+### 2.1 Track A: Backend Fallback Precision
+1. **Triangular Arbitrage Precision Upgrade:**
+   - In [`FrankfurterExchangeRateService.ts`](file:///Users/user/Documents/Personal/tc-coconut-lab/app-core/src/infrastructure/services/FrankfurterExchangeRateService.ts):
+     ```typescript
+     public calculateFallbackRate(base: string, quote: string): number {
+       const usdToBase = STATIC_USD_RATES[base] ?? 1.0;
+       const usdToQuote = STATIC_USD_RATES[quote] ?? 1.0;
+
+       // 8-decimal high-precision triangular arbitrage guard
+       const rate = usdToQuote / usdToBase;
+       return Math.round((rate + Number.EPSILON) * 100000000) / 100000000;
+     }
+     ```
+   - Resolves `IDR -> EUR` fallback rate from `0` to `0.00005804`.
+   - Resolves `IDR -> GBP` fallback rate from `0` to `0.00004984`.
+
+### 2.2 Track B: Frontend Live Rate Preview & Adaptive Ticker
+1. **Page-Level Arbitrage Preview (`page.tsx`):**
+   - In [`src/app/page.tsx`](file:///Users/user/Documents/Personal/tc-coconut-lab/app-core/src/app/page.tsx):
+     ```typescript
+     const getSelectedConversionRate = () => {
+       const fromW = wallets.find((w) => w.id === fromWalletId);
+       const toW = wallets.find((w) => w.id === toWalletId);
+       if (!fromW || !toW || fromW.currency === toW.currency) return 1.0;
+
+       const directKey = `${fromW.currency}_${toW.currency}`;
+       if (rates[directKey]) return rates[directKey];
+
+       const usdToFrom = rates[`USD_${fromW.currency}`] || (fromW.currency === 'USD' ? 1.0 : 1.0);
+       const usdToTo = rates[`USD_${toW.currency}`] || (toW.currency === 'USD' ? 1.0 : 1.0);
+       return Math.round((usdToTo / usdToFrom + Number.EPSILON) * 100000000) / 100000000;
+     };
+     ```
+2. **Adaptive Ticker Display Formatting (`WalletActionWorkbench.tsx`):**
+   - When displaying `1 IDR = X EUR`, if `rate < 0.01`, format using `rate.toFixed(6)` or locale string with up to 8 decimal places:
+     ```typescript
+     const formattedRate = rate < 0.01 ? rate.toFixed(6) : rate.toFixed(4);
+     ```
+   - Avoids confusing `1 IDR = 0 EUR` badge; renders clear `1 IDR = 0.000058 EUR`.
+
+---
+
+## 🧪 3. Definition of Done (DoD) Checklist
+
+- [x] **A1:** `FrankfurterExchangeRateService.calculateFallbackRate` calculates cross-rates with 8 decimal places.
+- [x] **A2:** `IDR -> EUR` and `IDR -> GBP` fallback rates evaluate to non-zero values (`> 0.00001`).
+- [x] **B1:** `src/app/page.tsx` preview calculation upgraded to 8-decimal factor (`100,000,000`).
+- [x] **B2:** Converting `10,000,000 IDR` to `EUR` produces non-zero yield ($\approx €530+$).
+- [x] **B3:** Converting `10,000,000 IDR` to `GBP` produces non-zero yield ($\approx £470+$).
+- [x] **B4:** Mid-market rate badge displays adaptive micro-decimal notation for small rates.
+- [x] **C1:** Vitest suite updated with micro-rate assertions.
+- [x] **C2:** All 80+ Vitest tests passing with 0 regressions.

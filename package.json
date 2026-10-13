@@ -1,0 +1,17 @@
+{
+  "name": "tc-coconut-lab",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Multi-Currency Digital Wallet Application (Coconut Lab TC)",
+  "scripts": {
+    "setup": "npm --prefix app-core install && npm --prefix docs-viewer install && npm --prefix app-core run db:push && npm --prefix app-core run db:seed",
+    "dev": "npm --prefix app-core run dev",
+    "build": "npm --prefix app-core run build",
+    "test": "npm --prefix app-core test",
+    "typecheck": "npm --prefix app-core run typecheck",
+    "db:push": "npm --prefix app-core run db:push",
+    "db:seed": "npm --prefix app-core run db:seed",
+    "docs:dev": "node scripts/start-docs.js 7001",
+    "docs:build": "npm --prefix docs-viewer run build"
+  }
+}

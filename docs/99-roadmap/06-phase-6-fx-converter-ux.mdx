@@ -1,0 +1,81 @@
+---
+title: 'Phase 6: FX Converter UX Redesign & Bi-Directional Currency Clarity'
+sidebar_label: Phase 6 - FX Converter UX
+sidebar_position: 7
+---
+
+import Mermaid from '@site/src/components/Mermaid';
+
+<div className="page-header-wrapper">
+  <div className="page-badge">
+    <span className="status-badge status-badge--implemented">Status: Implemented</span>
+  </div>
+
+# 💱 Phase 6: FX Converter UX Redesign & Bi-Directional Currency Clarity
+
+</div>
+
+> **Created at:** 2026-10-13 | **Updated at:** 2026-10-13 <br />
+> **Initiator:** Indra SB | **Last Auditor:** Indra SB
+
+> **Target Timeline:** Wave 6 (Fintech UX Refinement)  
+> **Status:** Completed (100% / 🟢)
+
+This phase addresses the currency denomination ambiguity in the Currency Conversion flow. It redesigns the workbench into a modern digital banking FX converter (Wise / Revolut standard) with explicit source currency inputs, 1-click swap actions, and real-time auto-calculated quotes.
+
+---
+
+## 🎯 1. Scope & Execution Tracks
+
+<Mermaid withCard chart={`graph TD
+    subgraph TrackA["Track A: UI Workbench Redesign"]
+        A1["You Convert (Sell) Card with Currency Adornment"]
+        A2["Mid-Market ECB Rate Badge & ⇄ Swap Button"]
+        A3["You Receive (Buy - Estimated) Real-Time Box"]
+        A4["Contextual Call-to-Action Submit Button"]
+    end
+
+    subgraph TrackB["Track B: Frontend Testing Alignment"]
+        B1["Update WalletActionWorkbench.test.tsx"]
+        B2["Verify Currency Swap Event Interaction"]
+        B3["Verify Dynamic Conversion Quote Calculation"]
+    end
+
+    subgraph TrackC["Track C: Quality Gate"]
+        C1["Vitest Full Suite (49 Tests Green)"]
+        C2["Clean TypeScript Typecheck (0 Errors)"]
+    end
+
+    TrackA --> TrackB
+    TrackB --> TrackC
+`} />
+
+---
+
+## 📋 2. Epic Task Checklist
+
+### 🎨 Track A: FX Converter UI Redesign
+- [x] Implement "You Convert (Sell)" card with explicit currency code and symbol prefix (`$`, `€`, `£`, `S$`, `Rp`)
+- [x] Add interactive mid-market rate bar with 1-click **⇄ Swap Currencies** button
+- [x] Implement "You Receive (Buy - Estimated)" card with real-time auto-calculated quote
+- [x] Add dynamic contextual submit CTA (e.g. `Convert 100 USD to 92.15 EUR`)
+
+### 🧪 Track B: Frontend Unit Testing Alignment
+- [x] Update `tests/frontend/WalletActionWorkbench.test.tsx` to verify new currency prefix and swap functionality
+- [x] Verify tab switching between Convert, Transfer, Deposit, and Withdraw retains proper state
+
+### 🚀 Track C: Regression & Verification
+- [x] Ensure all 49 unit & component tests pass in Vitest sub-1s
+- [x] Verify zero TypeScript errors (`npx tsc --noEmit --incremental false`)
+
+---
+
+## 🧪 3. Verification Commands
+
+```bash
+# Execute unified test suite
+npm test
+
+# Run TypeScript typecheck
+npx tsc --noEmit --incremental false
+```

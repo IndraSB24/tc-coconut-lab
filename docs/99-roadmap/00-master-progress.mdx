@@ -1,0 +1,252 @@
+---
+title: 'Master Implementation Tracker'
+slug: /roadmap/master-progress
+---
+
+import Mermaid from '@site/src/components/Mermaid';
+
+<div className="page-header-wrapper">
+  <div className="page-badge">
+    <span className="status-badge status-badge--implemented">Status: Implemented</span>
+  </div>
+
+# 🗺️ Master Progress & Roadmap: Multi-Currency Digital Wallet
+
+</div>
+
+> **Created at:** 2026-10-13 | **Updated at:** 2026-10-13 <br />
+> **Initiator:** Indra SB | **Last Auditor:** Indra SB
+
+This document serves as the **Epic-Level Progress Tracker** detailing all implementation phases of the **Multi-Currency Digital Wallet (Coconut Lab)**.
+
+---
+
+## 📊 Visual Roadmap
+
+<Mermaid withCard showSource chart={`graph LR
+    P1["✅ Phase 1<br/>Core Domain & Basic Ops"]:::done --> P2["✅ Phase 2<br/>Frankfurter Gateway & Conversion"]:::done
+    P2 --> P3["✅ Phase 3<br/>Ledger Inspection & UI Workbench"]:::done
+    P3 --> P4["✅ Phase 4<br/>Production Polish & Modularization"]:::done
+    P4 --> P5["✅ Phase 5<br/>Frontend Component & State Testing"]:::done
+    P5 --> P6["✅ Phase 6<br/>FX Converter UX & Currency Clarity"]:::done
+    P6 --> P7["✅ Phase 7<br/>IDR Currency Transition"]:::done
+    P7 --> P8["✅ Phase 8<br/>Masked Currency Input"]:::done
+    P8 --> P9["✅ Phase 9<br/>CustomSelect Component"]:::done
+    P9 --> P10["✅ Phase 10<br/>Reusable DataTable"]:::done
+    P10 --> P11["✅ Phase 11<br/>Multi-Sub-Wallets & Transfers"]:::done
+    P11 --> P12["✅ Phase 12<br/>FX Precision & Underflow"]:::done
+
+    classDef done fill:#dcfce7,stroke:#166534,stroke-width:2px,color:#166534;
+    classDef active fill:#fef08a,stroke:#854d0e,stroke-width:2px,color:#854d0e;
+    classDef pending fill:#f1f5f9,stroke:#475569,stroke-width:2px,color:#475569,stroke-dasharray: 5 5;
+`} />
+
+---
+
+## 🎯 Detail Milestones
+
+<div style={{ visibility: 'hidden', height: 0, margin: 0, padding: 0 }}>
+
+### ✅ Phase 1: Core Domain & Basic Operations
+
+</div>
+
+<details className="alert alert--success" open={false} style={{ marginBottom: '1rem', borderRadius: '8px', marginTop: '-1rem' }}>
+  <summary style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', fontWeight: 'bold' }}>
+    <span>✅ Phase 1: Core Domain & Basic Operations (Deposit, Withdraw, Balances)</span>
+    <a href="./01-phase-1-core.mdx" className="badge badge--success" style={{ textDecoration: 'none' }}>Milestone Board ➔</a>
+  </summary>
+  <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(0,0,0,0.1)' }}>
+    <strong>Status:</strong> Completed (100% / 🟢)<br/>
+    Built pure domain entities (User, Wallet, Transaction), SQLite schema via Prisma, financial decimal precision math, simulated user seeder, and deposit/withdraw use cases with Vitest tests (19 passed, sub-200ms).
+  </div>
+</details>
+
+<div style={{ visibility: 'hidden', height: 0, margin: 0, padding: 0 }}>
+
+### ✅ Phase 2: Frankfurter API Gateway, Conversion & Transfer
+
+</div>
+
+<details className="alert alert--success" open={false} style={{ marginBottom: '1rem', borderRadius: '8px', marginTop: '-1rem' }}>
+  <summary style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', fontWeight: 'bold' }}>
+    <span>✅ Phase 2: Frankfurter API Gateway, Conversion & Transfer</span>
+    <a href="./02-phase-2-rates-conversion.mdx" className="badge badge--success" style={{ textDecoration: 'none' }}>Milestone Board ➔</a>
+  </summary>
+  <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(0,0,0,0.1)' }}>
+    <strong>Status:</strong> Completed (100% / 🟢)<br/>
+    Integrated Frankfurter API gateway with in-memory TTL caching (60s), resilient offline triangular arbitrage fallback, multi-currency conversion use case, and paired double-entry ledger transfers (total 34 tests passed).
+  </div>
+</details>
+
+<div style={{ visibility: 'hidden', height: 0, margin: 0, padding: 0 }}>
+
+### ✅ Phase 3: Transaction Ledger Inspection & Interactive UI Workbench
+
+</div>
+
+<details className="alert alert--success" open={false} style={{ marginBottom: '1rem', borderRadius: '8px', marginTop: '-1rem' }}>
+  <summary style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', fontWeight: 'bold' }}>
+    <span>✅ Phase 3: Transaction Ledger Inspection & Interactive UI Workbench</span>
+    <a href="./03-phase-3-ledger-ui-workbench.mdx" className="badge badge--success" style={{ textDecoration: 'none' }}>Milestone Board ➔</a>
+  </summary>
+  <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(0,0,0,0.1)' }}>
+    <strong>Status:</strong> Completed (100% / 🟢)<br/>
+    Implemented transaction ledger history queries with filters, individual transaction inspector by ID, 8 REST endpoints in Next.js 15 App Router, and interactive Workbench dashboard on port 3000 (total 39 tests passed).
+  </div>
+</details>
+
+<div style={{ visibility: 'hidden', height: 0, margin: 0, padding: 0 }}>
+
+### ✅ Phase 4: Production Polish, Architectural Documentation & Frontend Modularization
+
+</div>
+
+<details className="alert alert--success" open={false} style={{ marginBottom: '1rem', borderRadius: '8px', marginTop: '-1rem' }}>
+  <summary style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', fontWeight: 'bold' }}>
+    <span>✅ Phase 4: Production Polish, Architectural Documentation & Frontend Modularization</span>
+    <a href="./04-phase-4-production-polish.mdx" className="badge badge--success" style={{ textDecoration: 'none' }}>Milestone Board ➔</a>
+  </summary>
+  <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(0,0,0,0.1)' }}>
+    <strong>Status:</strong> Completed (100% / 🟢)<br/>
+    Embedded 5 in-code architectural decision records across backend layers, decomposed monolithic `page.tsx` (788 lines) into 5 clean reusable components in `src/components/wallet/`, and verified full regression (39/39 passing unit tests).
+  </div>
+</details>
+
+<div style={{ visibility: 'hidden', height: 0, margin: 0, padding: 0 }}>
+
+### ✅ Phase 5: Frontend Component & State Interaction Unit Testing
+
+</div>
+
+<details className="alert alert--success" open={false} style={{ marginBottom: '1rem', borderRadius: '8px', marginTop: '-1rem' }}>
+  <summary style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', fontWeight: 'bold' }}>
+    <span>✅ Phase 5: Frontend Component & State Interaction Unit Testing</span>
+    <a href="./05-phase-5-frontend-testing.mdx" className="badge badge--success" style={{ textDecoration: 'none' }}>Milestone Board ➔</a>
+  </summary>
+  <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(0,0,0,0.1)' }}>
+    <strong>Status:</strong> Completed (100% / 🟢)<br/>
+    Configured Vitest in-memory DOM simulation (`happy-dom`) and established Level 2 component & state interaction unit tests for `WalletCardGrid`, `LedgerAuditTable`, and `WalletActionWorkbench`. Total suite: 47/47 passing tests in 634ms.
+  </div>
+</details>
+
+<div style={{ visibility: 'hidden', height: 0, margin: 0, padding: 0 }}>
+
+### ✅ Phase 6: FX Converter UX Redesign & Bi-Directional Currency Clarity
+
+</div>
+
+<details className="alert alert--success" open={false} style={{ marginBottom: '1rem', borderRadius: '8px', marginTop: '-1rem' }}>
+  <summary style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', fontWeight: 'bold' }}>
+    <span>✅ Phase 6: FX Converter UX Redesign & Bi-Directional Currency Clarity</span>
+    <a href="./06-phase-6-fx-converter-ux.mdx" className="badge badge--success" style={{ textDecoration: 'none' }}>Milestone Board ➔</a>
+  </summary>
+  <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(0,0,0,0.1)' }}>
+    <strong>Status:</strong> Completed (100% / 🟢)<br/>
+    Redesigned the Currency Conversion workbench into the Wise/Revolut fintech standard: explicit "You Convert (Sell)" input adornments, 1-click ⇄ currency swap, and real-time auto-calculated "You Receive (Buy - Estimated)" quotes with dynamic contextual submit actions (49/49 passing unit & component tests).
+  </div>
+</details>
+
+<div style={{ visibility: 'hidden', height: 0, margin: 0, padding: 0 }}>
+
+### ✅ Phase 7: IDR (Indonesian Rupiah) Zero-Decimal Currency Transition
+
+</div>
+
+<details className="alert alert--success" open={false} style={{ marginBottom: '1rem', borderRadius: '8px', marginTop: '-1rem' }}>
+  <summary style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', fontWeight: 'bold' }}>
+    <span>✅ Phase 7: IDR (Indonesian Rupiah) Zero-Decimal Currency Transition</span>
+    <a href="./07-phase-7-idr-currency-transition.mdx" className="badge badge--success" style={{ textDecoration: 'none' }}>Milestone Board ➔</a>
+  </summary>
+  <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(0,0,0,0.1)' }}>
+    <strong>Status:</strong> Completed (100% / 🟢)<br/>
+    Transitioned from JPY to IDR (`Rp`) across domain precision math, Frankfurter gateway fallback matrix (`USD_IDR: 15,850.0`), SQLite seeder (Rp 15,000,000 initial balance), frontend components, and regression test suites (49/49 passing tests).
+  </div>
+</details>
+
+<div style={{ visibility: 'hidden', height: 0, margin: 0, padding: 0 }}>
+
+### ✅ Phase 8: Reusable Masked Currency Input & Dynamic Thousand Separator
+
+</div>
+
+<details className="alert alert--success" open={false} style={{ marginBottom: '1rem', borderRadius: '8px', marginTop: '-1rem' }}>
+  <summary style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', fontWeight: 'bold' }}>
+    <span>✅ Phase 8: Reusable Masked Currency Input & Dynamic Thousand Separator</span>
+    <a href="./08-phase-8-currency-input-component.mdx" className="badge badge--success" style={{ textDecoration: 'none' }}>Milestone Board ➔</a>
+  </summary>
+  <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(0,0,0,0.1)' }}>
+    <strong>Status:</strong> Completed (100% / 🟢)<br/>
+    Extracted dedicated, reusable `CurrencyAmountInput` component with dynamic real-time thousand separators (`15,000,000`), intentional decimal entry, strict zero-decimal enforcement on IDR, and Level 2 component test coverage (total suite: 57/57 passing tests in ~824ms).
+  </div>
+</details>
+
+<div style={{ visibility: 'hidden', height: 0, margin: 0, padding: 0 }}>
+
+### ✅ Phase 9: Reusable Fintech Glassmorphic CustomSelect Component
+
+</div>
+
+<details className="alert alert--success" open={false} style={{ marginBottom: '1rem', borderRadius: '8px', marginTop: '-1rem' }}>
+  <summary style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', fontWeight: 'bold' }}>
+    <span>✅ Phase 9: Reusable Fintech Glassmorphic CustomSelect Component</span>
+    <a href="./09-phase-9-custom-dropdown-component.mdx" className="badge badge--success" style={{ textDecoration: 'none' }}>Milestone Board ➔</a>
+  </summary>
+  <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(0,0,0,0.1)' }}>
+    <strong>Status:</strong> Completed (100% / 🟢)<br/>
+    Built and integrated an enterprise-grade `CustomSelect` component with glassmorphic floating popovers, currency avatar pills, right-aligned monospace balance previews, click-outside/escape dismissal guards, and Level 2 component test coverage across the workbench and ledger tables (total suite: 64/64 passing tests in ~904ms).
+  </div>
+</details>
+
+<div style={{ visibility: 'hidden', height: 0, margin: 0, padding: 0 }}>
+
+### ✅ Phase 10: Reusable Fintech DataTable with Sorting, Pagination & Search
+
+</div>
+
+<details className="alert alert--success" open={false} style={{ marginBottom: '1rem', borderRadius: '8px', marginTop: '-1rem' }}>
+  <summary style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', fontWeight: 'bold' }}>
+    <span>✅ Phase 10: Reusable Fintech DataTable with Sorting, Pagination & Search</span>
+    <a href="./10-phase-10-datatable-component.mdx" className="badge badge--success" style={{ textDecoration: 'none' }}>Milestone Board ➔</a>
+  </summary>
+  <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(0,0,0,0.1)' }}>
+    <strong>Status:</strong> Completed (100% / 🟢)<br/>
+    Built and integrated an enterprise-grade generic `DataTable` component with multi-column sorting, client-side pagination, quick keyword search, custom cell renderers, and refactored `LedgerAuditTable` to eliminate monolithic unpaginated table markups (total suite: 71/71 passing tests in ~951ms).
+  </div>
+</details>
+
+<div style={{ visibility: 'hidden', height: 0, margin: 0, padding: 0 }}>
+
+### ✅ Phase 11: Multi-Sub-Wallet Creation & Strict Same-Currency Transfer Enforcement
+
+</div>
+
+<details className="alert alert--success" open={false} style={{ marginBottom: '1rem', borderRadius: '8px', marginTop: '-1rem' }}>
+  <summary style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', fontWeight: 'bold' }}>
+    <span>✅ Phase 11: Multi-Sub-Wallet Creation & Strict Same-Currency Transfer Enforcement</span>
+    <a href="./11-phase-11-multi-wallet-and-same-currency-transfer.mdx" className="badge badge--success" style={{ textDecoration: 'none' }}>Milestone Board ➔</a>
+  </summary>
+  <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(0,0,0,0.1)' }}>
+    <strong>Status:</strong> Completed (100% / 🟢)<br/>
+    Enforces strict 1:1 same-currency transfers, enables dynamic creation of multiple sub-wallets per currency, transitions wallet cards to a horizontal scrollable view with currency filter chips, and fixes thousand separators on action buttons (total suite: 81/81 passing tests in ~1.0s).
+  </div>
+</details>
+
+<div style={{ visibility: 'hidden', height: 0, margin: 0, padding: 0 }}>
+
+### ✅ Phase 12: High-Precision FX Rate Engine & Micro-Rate Underflow Resolution
+
+</div>
+
+<details className="alert alert--success" open={false} style={{ marginBottom: '1rem', borderRadius: '8px', marginTop: '-1rem' }}>
+  <summary style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', fontWeight: 'bold' }}>
+    <span>✅ Phase 12: High-Precision FX Rate Engine & Micro-Rate Underflow Resolution</span>
+    <a href="./12-phase-12-high-precision-fx-rate-resolution.mdx" className="badge badge--success" style={{ textDecoration: 'none' }}>Milestone Board ➔</a>
+  </summary>
+  <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(0,0,0,0.1)' }}>
+    <strong>Status:</strong> Completed (100% / 🟢)<br/>
+    Eliminates floating-point underflow on high-denomination currencies (IDR to EUR/GBP/USD) by elevating cross-rate precision to 8 decimal places ($10^{-8}$), preventing zero-yield rounding, and implementing adaptive micro-rate UI formatting (total suite: 81/81 passing tests in ~1.1s).
+  </div>
+</details>
+
+

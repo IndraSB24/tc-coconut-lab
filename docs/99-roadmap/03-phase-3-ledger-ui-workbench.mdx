@@ -1,0 +1,68 @@
+---
+title: 'Phase 3: Transaction Ledger Inspection & Interactive UI Workbench'
+sidebar_label: Phase 3 - Ledger & UI Workbench
+sidebar_position: 4
+---
+
+<div className="page-header-wrapper">
+  <div className="page-badge">
+    <span className="status-badge status-badge--implemented">Status: Implemented</span>
+  </div>
+
+# 🚧 Phase 3: Transaction Ledger Inspection & Interactive UI Workbench
+
+</div>
+
+> **Created at:** 2026-10-13 | **Updated at:** 2026-10-13 <br />
+> **Initiator:** Indra SB | **Last Auditor:** Indra SB
+
+> **Target Timeline:** Wave 3  
+> **Status:** Implemented (100% Completed)
+
+This phase delivered the transaction audit ledger inspection capabilities (both filtered global ledger and individual transaction inspector), 8 REST API App Router endpoints, and the reactive UI Workbench dashboard.
+
+---
+
+## 🎯 1. Scope & Intent
+
+1. **Transaction Audit & Ledger Inspection:**
+   - `GetTransactionHistoryUseCase`: Queries transaction records with filtering by `walletId`, `type`, and limit.
+   - `GetTransactionDetailUseCase`: Retrieves comprehensive details for an individual transaction (including applied exchange rate, counterparty wallet ID, and notes).
+2. **Next.js 15 App Router REST Handlers:**
+   - `GET /api/wallets`
+   - `POST /api/wallets/[id]/deposit`
+   - `POST /api/wallets/[id]/withdraw`
+   - `POST /api/wallets/convert`
+   - `POST /api/wallets/transfer`
+   - `GET /api/rates`
+   - `GET /api/transactions`
+   - `GET /api/transactions/[id]`
+3. **Interactive UI Workbench (`src/app/page.tsx`):**
+   - **Wallet Portfolio Cards:** Multi-currency cards (`USD`, `EUR`, `GBP`, `SGD`, `JPY`) with formatted balances and status badges.
+   - **Estimated Total Portfolio:** Aggregates portfolio value in USD using live FX rates.
+   - **Operation Workbench Form:** Interactive tabbed interface for Deposit, Withdraw, Transfer, and Currency Conversion.
+   - **Live Rates Ticker:** Live reference rates fetched dynamically from the Frankfurter API.
+   - **Audit Ledger Table:** Real-time transaction history with color-coded badges, reference IDs, and individual Transaction Detail Inspector Modal.
+
+---
+
+## 📋 2. Epic Task List
+
+### 📊 Query Use Cases & API Routes
+- [x] Implemented `GetTransactionHistoryUseCase` & `GetTransactionDetailUseCase`
+- [x] Route Handlers: `/api/wallets` & `/api/wallets/[id]/deposit`
+- [x] Route Handler: `/api/wallets/[id]/withdraw`
+- [x] Route Handlers: `/api/wallets/convert` & `/api/wallets/transfer`
+- [x] Route Handler: `/api/rates`
+- [x] Route Handlers: `/api/transactions` & `/api/transactions/[id]`
+
+### 🎨 Interactive UI Workbench
+- [x] Built responsive multi-currency wallet balance cards
+- [x] Built interactive action form tabs (Deposit, Withdraw, Convert, Transfer) with live conversion preview
+- [x] Built transaction history table with wallet and type filter controls
+- [x] Built individual Transaction Details Inspector modal dialog
+- [x] Integrated toast notification system for domain error feedback
+
+### 🧪 Automated Testing
+- [x] Verified `GetTransactions.spec.ts` (5 passed)
+- [x] Full test suite green (39/39 passed)

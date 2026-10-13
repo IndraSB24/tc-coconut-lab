@@ -1,0 +1,28 @@
+import { NextRequest } from 'next/server';
+import { container } from '@/infrastructure/container';
+import { apiSuccess, handleApiError } from '@/lib/api-response';
+
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json();
+
+    const result = await container.transferFundsUseCase.execute({
+      fromWalletId: String(body.fromWalletId),
+      toWalletId: String(body.toWalletId),
+      amount: Number(body.amount),
+      notes: body.notes,
+    });
+
+    return apiSuccess({
+      referenceId: result.referenceId,
+      fromWallet: result.fromWallet.toJSON(),
+      toWallet: result.toWallet.toJSON(),
+      amountTransferred: result.amountTransferred,
+      effectiveRate: result.effectiveRate,
+      receivedAmount: result.receivedAmount,
+      transactions: result.transactions.map((t) => t.toJSON()),
+    });
+  } catch (err) {
+    return handleApiError(err);
+  }
+}

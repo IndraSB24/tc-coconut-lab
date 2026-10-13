@@ -1,0 +1,189 @@
+---
+title: 'Domain Logic & Invariants: Multi-Currency Wallet Engine'
+sidebar_label: Wallet Invariants & Errors
+sidebar_position: 1
+---
+
+import Mermaid from '@site/src/components/Mermaid';
+
+<div className="page-header-wrapper">
+  <div className="page-badge">
+    <span className="status-badge status-badge--implemented">Status: Implemented</span>
+  </div>
+
+# 💡 Domain Logic & Invariants: Multi-Currency Wallet Engine
+
+</div>
+
+> **Created at:** 2026-10-13 | **Updated at:** 2026-10-13 <br />
+> **Initiator:** Indra SB | **Last Auditor:** Indra SB
+
+This document defines pure domain business rules, financial precision invariants, currency rounding formulas, and the standardized error hierarchy governing the multi-currency digital wallet engine.
+
+---
+
+## 💰 1. Currency Precision & Financial Safety Invariants
+
+The application supports international currencies with varying decimal scale characteristics:
+
+| Currency Code | Currency Name | Symbol | Decimal Scale | Smallest Subunit | Formatted Example |
+|---|---|:---:|:---:|---|---|
+| `USD` | United States Dollar | `$` | 2 | Cents (`0.01`) | `$1,250.50` |
+| `EUR` | Euro | `€` | 2 | Cents (`0.01`) | `€750.25` |
+| `GBP` | British Pound Sterling | `£` | 2 | Pence (`0.01`) | `£450.00` |
+| `SGD` | Singapore Dollar | `S$` | 2 | Cents (`0.01`) | `S$920.75` |
+| `IDR` | Indonesian Rupiah | `Rp` | 0 | Whole Rupiah (`1`) | `Rp 15,000,000` |
+
+### 1.1 Rounding Formula (IEEE-754 Epsilon Guard):
+To eliminate floating-point arithmetic errors (such as `0.1 + 0.2 = 0.30000000000000004`), all balance calculations employ an epsilon-guarded rounding utility:
+
+```typescript
+function roundCurrency(amount: number, currency: string): number {
+  const precision = currency === 'IDR' ? 0 : 2;
+  const factor = Math.pow(10, precision);
+  return Math.round((amount + Number.EPSILON) * factor) / factor;
+}
+```
+
+### 1.2 High-Precision FX Micro-Rate Invariant (8-Decimal Scale Guard):
+When converting from high-denomination currencies (`IDR`, `JPY`, `VND`) into high-value currencies (`EUR`, `GBP`, `USD`), cross-rates fall into the micro-rate domain:
+- With 1 USD ≈ 16,000 IDR, the reciprocal rate is 1 IDR ≈ 0.0000625 USD, 0.0000531 EUR, and 0.0000475 GBP.
+- **Invariant:** Exchange rate calculations MUST maintain **8 decimal places (10⁻⁸)** before applying final subunit rounding to prevent arithmetic underflow (`0.0000`) and truncation distortion:
+
+```typescript
+function roundExchangeRate(rate: number): number {
+  return Math.round((rate + Number.EPSILON) * 100000000) / 100000000;
+}
+```
+
+---
+
+## 🛡️ 2. Domain Error Hierarchy & HTTP Mapping
+
+All domain rule violations throw typed errors inheriting from `DomainError`. These map deterministically to standard HTTP status codes in the presentation layer:
+
+<Mermaid withCard showSource chart={`classDiagram
+    class DomainError {
+        +string code
+        +string message
+        +number statusCode
+    }
+
+    class InsufficientBalanceError {
+        +code: "INSUFFICIENT_BALANCE"
+        +statusCode: 422
+    }
+
+    class InvalidAmountError {
+        +code: "INVALID_AMOUNT"
+        +statusCode: 400
+    }
+
+    class WalletNotFoundError {
+        +code: "WALLET_NOT_FOUND"
+        +statusCode: 404
+    }
+
+    class SelfTransferError {
+        +code: "SELF_TRANSFER_PROHIBITED"
+        +statusCode: 400
+    }
+
+    class UnsupportedCurrencyError {
+        +code: "UNSUPPORTED_CURRENCY"
+        +statusCode: 400
+    }
+
+    class ExchangeRateUnavailableError {
+        +code: "EXCHANGE_RATE_UNAVAILABLE"
+        +statusCode: 502
+    }
+
+    class CurrencyMismatchTransferError {
+        +code: "CURRENCY_MISMATCH_TRANSFER"
+        +statusCode: 400
+    }
+
+    class SameCurrencyConversionError {
+        +code: "SAME_CURRENCY_CONVERSION_PROHIBITED"
+        +statusCode: 400
+    }
+
+    DomainError <|-- InsufficientBalanceError
+    DomainError <|-- InvalidAmountError
+    DomainError <|-- WalletNotFoundError
+    DomainError <|-- SelfTransferError
+    DomainError <|-- UnsupportedCurrencyError
+    DomainError <|-- ExchangeRateUnavailableError
+    DomainError <|-- CurrencyMismatchTransferError
+    DomainError <|-- SameCurrencyConversionError
+`} />
+
+### 2.1 Error Specifications:
+1. **`InsufficientBalanceError` (HTTP 422):**
+   Thrown when requested withdrawal or conversion exceeds current balance (`wallet.balance < amount`).
+2. **`InvalidAmountError` (HTTP 400):**
+   Thrown when the input amount is `<= 0`, `NaN`, or not a finite number.
+3. **`WalletNotFoundError` (HTTP 404):**
+   Thrown when the target wallet ID does not exist in the database.
+4. **`SelfTransferError` (HTTP 400):**
+   Thrown when the source and destination wallets are identical in a transfer operation.
+5. **`UnsupportedCurrencyError` (HTTP 400):**
+   Thrown when an unsupported currency code is supplied.
+6. **`ExchangeRateUnavailableError` (HTTP 502):**
+   Thrown if external exchange rate services are unreachable and fallback data is exhausted.
+7. **`CurrencyMismatchTransferError` (HTTP 400):**
+   Thrown when inter-wallet transfer is attempted between wallets of different currencies (`fromWallet.currency !== toWallet.currency`). Users must execute cross-currency exchanges via Currency Conversion.
+8. **`SameCurrencyConversionError` (HTTP 400):**
+   Thrown when currency conversion is attempted between wallets of the identical currency (`fromWallet.currency === toWallet.currency`). Users must execute same-currency movements via Inter-Wallet Transfer.
+
+---
+
+## 🔄 3. Transaction Operations & State Transitions
+
+### 3.1 Deposit Simulated Funds
+- **Pre-conditions:** `amount > 0` and target wallet exists.
+- **State Transition:** `balance' = roundCurrency(balance + amount, currency)`.
+- **Ledger Record:** Creates `DEPOSIT` transaction with resulting balance recorded.
+
+### 3.2 Withdraw Funds
+- **Pre-conditions:** `amount > 0`, wallet exists, and `balance >= amount`.
+- **State Transition:** `balance' = roundCurrency(balance - amount, currency)`.
+- **Ledger Record:** Creates `WITHDRAWAL` transaction.
+
+### 3.3 Currency Conversion
+- **Pre-conditions:**
+  - `sourceWallet.currency !== targetWallet.currency`.
+  - `amount > 0`.
+  - `sourceWallet.balance >= amount`.
+  - Exchange rate `R` successfully retrieved from Frankfurter API.
+- **Credit Calculation:** `targetAmount = roundCurrency(amount * R, targetWallet.currency)`.
+- **State Transitions:**
+  - `sourceWallet.balance' = sourceWallet.balance - amount`
+  - `targetWallet.balance' = targetWallet.balance + targetAmount`
+- **Ledger Records:**
+  - Record 1: `CONVERT_OUT` on `sourceWallet` (captures `exchangeRate = R`, `counterpartyWalletId = targetWallet.id`).
+  - Record 2: `CONVERT_IN` on `targetWallet` (captures `exchangeRate = R`, `counterpartyWalletId = sourceWallet.id`).
+  - Both records bound by a shared correlation `referenceId` UUID.
+
+#### 3.3.1 FX Quoting Semantics & Bi-Directional UX Invariants
+1. **Source-Anchored Quoting Rule:** The user input in a conversion operation always defines the **Debit Amount in Source Currency** (`sellAmount`). The credited amount in the target currency is derived deterministically via:
+   `targetAmount = roundCurrency(sellAmount * R, targetCurrency)`
+2. **Subunit Truncation Invariant:**
+   - If target currency is `IDR`, fractional amounts are rounded to integer units (0 decimals) per ISO 4217.
+   - If target currency is fiat (`USD`, `EUR`, `GBP`, `SGD`), amounts are rounded to 2 decimal places using `Number.EPSILON` safe boundary resolution.
+3. **Instantaneous Swap Invariant (⇄ Currency Swap):**
+   - Clicking the swap action reverses the tuple `(fromWallet, toWallet)`.
+   - The exchange rate is instantaneously inverted:
+     `R_new = roundRate(1 / R_old)`
+   - The UI immediately recalculates and previews the new estimated yield without requiring form re-initialization.
+
+### 3.4 Inter-Wallet Transfer
+- **Pre-conditions:** `fromWallet.id !== toWallet.id`, `amount > 0`, `fromWallet.balance >= amount`, `fromWallet.currency === toWallet.currency`.
+- **Strict Same-Currency Enforcement:** 
+  - Debit source wallet by `amount`.
+  - Credit destination wallet by `amount` (1:1 financial math, effective exchange rate = 1.0).
+  - Ledger strictly creates paired `TRANSFER_OUT` and `TRANSFER_IN` records.
+- **Cross-Currency Guard:**
+  - Attempting cross-currency transfers throws `CurrencyMismatchTransferError` (HTTP 400).
+  - Cross-currency mutations must be executed strictly via **Currency Conversion** (`ConvertFundsUseCase`).

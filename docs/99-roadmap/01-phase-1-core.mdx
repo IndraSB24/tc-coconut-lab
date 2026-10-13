@@ -1,0 +1,65 @@
+---
+title: 'Phase 1: Core Domain, Storage & Single-Currency Operations'
+sidebar_label: Phase 1 - Core Domain & Operations
+sidebar_position: 2
+---
+
+<div className="page-header-wrapper">
+  <div className="page-badge">
+    <span className="status-badge status-badge--implemented">Status: Implemented</span>
+  </div>
+
+# 🚧 Phase 1: Core Domain, Storage & Single-Currency Operations
+
+</div>
+
+> **Created at:** 2026-10-13 | **Updated at:** 2026-10-13 <br />
+> **Initiator:** Indra SB | **Last Auditor:** Indra SB
+
+> **Target Timeline:** Wave 1  
+> **Status:** Implemented (100% Completed)
+
+This phase established the foundational pure domain models, currency precision math utilities, SQLite persistence via Prisma, initial simulated user provisioning, and deposit/withdrawal application use cases.
+
+---
+
+## 🎯 1. Scope & Intent
+
+1. **Domain Model & Invariants:**
+   - Framework-agnostic `Wallet` and `Transaction` domain entities.
+   - Financial decimal utility `roundCurrency` (`JPY` = 0 decimals, other fiats = 2 decimals).
+   - Domain error hierarchy: `InsufficientBalanceError`, `InvalidAmountError`, `WalletNotFoundError`.
+2. **Persistence Layer (Prisma SQLite):**
+   - Relational schema in `prisma/schema.prisma` with `User`, `Wallet`, and `Transaction` models.
+   - Database push and seeding script allocating initial wallets to simulated user `Indra SB` (`USD: $1,000`, `EUR: €500`, `GBP: £300`, `SGD: S$400`, `JPY: ¥50,000`).
+3. **Core Use Cases:**
+   - `DepositFundsUseCase`: Validates `amount > 0`, credits wallet balance, records `DEPOSIT` transaction.
+   - `WithdrawFundsUseCase`: Validates `amount > 0`, guards against overdraft (`InsufficientBalanceError`), debits wallet balance, records `WITHDRAWAL` transaction.
+   - `GetWalletsUseCase`: Queries user wallets and builds currency balance map.
+4. **Unit Test Suite (Vitest):**
+   - High-speed in-memory repository tests executing in sub-200ms.
+
+---
+
+## 📋 2. Epic Task List
+
+### 📦 Domain Core & Persistence
+- [x] Implemented typed domain errors in `src/core/domain/errors/`
+- [x] Implemented entities `User.ts`, `Wallet.ts`, and `Transaction.ts` in `src/core/domain/entities/`
+- [x] Implemented currency precision utilities in `src/core/domain/utils/currency-math.ts`
+- [x] Configured `prisma/schema.prisma` with SQLite provider and unique multi-currency constraints
+- [x] Provisioned simulated user seed in `prisma/seed.ts` across 5 fiat currencies
+
+### ⚙️ Use Cases & In-Memory Repositories
+- [x] Defined repository interfaces `IWalletRepository` and `ITransactionRepository`
+- [x] Implemented `InMemoryWalletRepository` & `InMemoryTransactionRepository` for fast test runs
+- [x] Implemented `DepositFundsUseCase`
+- [x] Implemented `WithdrawFundsUseCase`
+- [x] Implemented `GetWalletsUseCase`
+
+### 🧪 Automated Unit Testing
+- [x] Verified `Wallet.spec.ts` (8 passed)
+- [x] Verified `DepositFunds.spec.ts` (3 passed)
+- [x] Verified `WithdrawFunds.spec.ts` (4 passed)
+- [x] Verified `GetWallets.spec.ts` (2 passed)
+- [x] Verified `workbench.test.ts` (2 passed)

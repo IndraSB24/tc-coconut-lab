@@ -1,0 +1,105 @@
+---
+title: 'Operations Runbook & Developer Workflow'
+sidebar_label: Operations Runbook
+sidebar_position: 1
+---
+
+<div className="page-header-wrapper">
+  <div className="page-badge">
+    <span className="status-badge status-badge--implemented">Status: Implemented</span>
+  </div>
+
+# 🚀 Operations Runbook & Developer Workflow
+
+</div>
+
+> **Created at:** 2026-10-13 | **Updated at:** 2026-10-13 <br />
+> **Initiator:** Indra SB | **Last Auditor:** Indra SB
+
+This runbook documents operational procedures, environment configurations, port management, database seeding, and build verification steps for the **Multi-Currency Digital Wallet**.
+
+---
+
+## 🧭 1. Dual-Service Architecture Topology
+
+The workspace operates as an enterprise monorepo providing both the **Runtime Application** and an **Interactive Architecture Documentation Portal** running concurrently without port conflicts:
+
+```
+┌────────────────────────────────────────────────────────┐
+│  🌐 PORT 3000: RUNTIME APPLICATION (Next.js 16)        │
+│     Command: npm run dev                               │
+│     URL:     http://localhost:3000                     │
+├────────────────────────────────────────────────────────┤
+│  📚 PORT 7001: ARCHITECTURE PORTAL (Docusaurus)        │
+│     Command: npm run docs:dev                          │
+│     URL:     http://localhost:7001                     │
+└────────────────────────────────────────────────────────┘
+```
+
+---
+
+## ⚡ 2. Quick Start Commands
+
+From the workspace root directory (`tc-coconut-lab/`):
+
+### 2.1 Run the Fullstack Application (`http://localhost:3000`)
+```bash
+npm run dev
+```
+- Launches the Next.js App Router application with reactive Tailwind UI, live exchange rate ticker, and SQLite persistence.
+
+### 2.2 Run the Architecture Documentation Portal (`http://localhost:7001`)
+```bash
+npm run docs:dev
+```
+- Or launch on any custom port dynamically:
+```bash
+npm run docs:dev 7002
+```
+
+### 2.3 Run Automated Domain Tests
+```bash
+npm test
+```
+- Runs all 81 Vitest unit & component tests in ~1s with zero external network dependency.
+
+---
+
+## 🗄️ 3. Database Lifecycle (Prisma & SQLite)
+
+The system utilizes an embedded SQLite file database at `app-core/prisma/dev.db`, guaranteeing zero cloud latency and eliminating Docker container overhead.
+
+### Schema Synchronization (Zero Migration Overhead):
+```bash
+cd app-core
+npx prisma db push
+```
+
+### Seed Simulated User and Wallets:
+```bash
+cd app-core
+npm run db:seed
+```
+- Provisions user `user-simulated` (`Indra SB`, `indra@coconut.io`) with 5 initial currency wallets:
+  - `USD`: $1,000.00
+  - `EUR`: €500.00
+  - `GBP`: £300.00
+  - `SGD`: S$400.00
+  - `IDR`: Rp 15,000,000
+
+---
+
+## 🛡️ 4. Build & Production Verification
+
+Verify full production readiness across both services:
+
+```bash
+# 1. Typecheck the runtime application
+npm --prefix app-core run typecheck
+
+# 2. Run domain unit test suite
+npm test
+
+# 3. Compile Docusaurus documentation engine
+npm run docs:build
+```

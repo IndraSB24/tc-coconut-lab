@@ -1,0 +1,104 @@
+---
+title: 'Phase 10: Reusable Fintech DataTable with Sorting, Pagination & Search'
+sidebar_label: Phase 10 - Reusable DataTable
+sidebar_position: 11
+---
+
+import Mermaid from '@site/src/components/Mermaid';
+
+<div className="page-header-wrapper">
+  <div className="page-badge">
+    <span className="status-badge status-badge--implemented">Status: Implemented</span>
+  </div>
+
+# 📊 Phase 10: Reusable Fintech DataTable with Sorting, Pagination & Search
+
+</div>
+
+> **Created at:** 2026-10-13 | **Updated at:** 2026-10-13 <br />
+> **Initiator:** Indra SB | **Last Auditor:** Indra SB
+
+> **Target Timeline:** Wave 10 (Data Presentation & Scalable Ledger Architecture)  
+> **Status:** Completed (100% / 🟢)
+
+This phase eliminates monolithic, unpaginated table markups across the application by engineering a dedicated, generic **Reusable Fintech DataTable** component (`DataTable.tsx`). It equips the transaction audit ledger with interactive multi-column sorting, client-side pagination with dynamic page sizes, integrated quick keyword search, custom cell renderers, and premium empty state illustrations.
+
+---
+
+## 🎯 1. Scope & Execution Tracks
+
+<Mermaid withCard chart={`graph TD
+    subgraph TrackA["Track A: Reusable DataTable Extraction"]
+        A1["DataTable.tsx with Generic Model ColumnDef (Generic T)"]
+        A2["Interactive Column Sorting (Asc / Desc / Neutral)"]
+        A3["Smart Pagination Bar (Page Sizes, Nav Buttons, Range Summary)"]
+        A4["Integrated Keyword Quick Search Bar"]
+        A5["Glassmorphic Container & Premium Empty State"]
+    end
+
+    subgraph TrackB["Track B: Ledger Table Integration"]
+        B1["Define Declarative Column Definitions for TransactionData"]
+        B2["Embed CustomSelect Filter Controls into Table Toolbar Slot"]
+        B3["Wire Detail Modal Inspection Action Handler"]
+        B4["Refactor LedgerAuditTable into Thin Declarative Consumer"]
+    end
+
+    subgraph TrackC["Track C: Level 2 Frontend Testing"]
+        C1["Create DataTable.test.tsx with happy-dom"]
+        C2["Test Column Sorting Ascending and Descending"]
+        C3["Test Pagination Page Switching and Row Slicing"]
+        C4["Test Quick Search Term Filtering"]
+        C5["Verify LedgerAuditTable.test.tsx Regression Pass"]
+    end
+
+    subgraph TrackD["Track D: Quality Gate"]
+        D1["Full Vitest Test Suite Green"]
+        D2["Clean TypeScript Typecheck (0 Errors)"]
+    end
+
+    TrackA --> TrackB
+    TrackB --> TrackC
+    TrackC --> TrackD
+`} />
+
+---
+
+## 📋 2. Epic Task Checklist
+
+### 🧩 Track A: Component Extraction (`DataTable.tsx`)
+- [x] Create `src/components/wallet/DataTable.tsx` with generic `<T>` typing
+- [x] Define `ColumnDef<T>` contract supporting `id`, `header`, `accessor`, `sortable`, `sortValue`, `align`, and `className`
+- [x] Implement multi-state column sorting logic (`asc` ➔ `desc` ➔ `none`) with interactive indicators (`ArrowUpDown`, `ArrowUp`, `ArrowDown`)
+- [x] Implement pagination engine with configurable `pageSize` options (5, 10, 25) and records range indicator (*"Showing 1 to 5 of 48 records"*)
+- [x] Implement integrated quick-search keyword filtering matching across searchable column fields
+- [x] Implement premium empty state UI with `ReceiptText` icon and fallback prompt
+
+### 🎛️ Track B: Ledger Audit Table Integration (`LedgerAuditTable.tsx`)
+- [x] Refactor `LedgerAuditTable.tsx` to consume `<DataTable<TransactionData>>`
+- [x] Configure declarative column definitions for Date/Time, Type (badge), Wallet, Amount (+/-, color-coded), Balance After, Reference ID, and Detail Inspect Action
+- [x] Move `CustomSelect` filters (Wallet and Type) into `<DataTable>` toolbar header slot
+- [x] Ensure full visual harmony with dark glassmorphic design system
+
+### 🧪 Track C: Level 2 Frontend Unit Testing
+- [x] Create `tests/frontend/DataTable.test.tsx` using `@testing-library/react` and `happy-dom`
+- [x] Test table column headers and custom cell content rendering
+- [x] Test sorting by column (clicking header flips order from ascending to descending)
+- [x] Test pagination switching to page 2 and rendering corresponding sliced rows
+- [x] Test quick search input filtering out non-matching rows
+- [x] Verify `LedgerAuditTable.test.tsx` passes with updated underlying component structure
+
+### 🚀 Track D: Quality Gate & Verification
+- [x] Ensure all unit & component tests pass in Vitest sub-1s
+- [x] Verify zero TypeScript errors (`npx tsc --noEmit --incremental false`)
+
+---
+
+## 🧪 3. Verification Commands
+
+```bash
+# Execute unified Vitest test suite
+npm test
+
+# Run TypeScript typecheck
+npx tsc --noEmit --incremental false
+```

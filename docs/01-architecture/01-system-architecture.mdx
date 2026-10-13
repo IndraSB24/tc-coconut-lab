@@ -1,0 +1,183 @@
+---
+title: 'System Architecture: Multi-Currency Wallet & Frankfurter Gateway'
+sidebar_label: System Architecture
+sidebar_position: 1
+---
+
+import Mermaid from '@site/src/components/Mermaid';
+
+<div className="page-header-wrapper">
+  <div className="page-badge">
+    <span className="status-badge status-badge--implemented">Status: Implemented</span>
+  </div>
+
+# 🏛️ System Architecture: Multi-Currency Wallet & Frankfurter Gateway
+
+</div>
+
+> **Created at:** 2026-10-13 | **Updated at:** 2026-10-14 <br />
+> **Initiator:** Indra SB | **Last Auditor:** Indra SB
+
+This document defines the system topology, Clean Architecture layering, external integration gateway resilience patterns, and double-entry transaction lifecycle for the **Multi-Currency Digital Wallet**.
+
+---
+
+## 🏗️ 1. Layered Architecture (DDD & Clean Architecture)
+
+The system adheres strictly to Clean Architecture principles. Core domain rules and financial invariants remain completely independent of external frameworks, databases, or transport protocols.
+
+<Mermaid withCard showSource chart={`graph TD
+    subgraph UI_Transport ["1. Presentation & HTTP Layer"]
+        Page["Next.js UI Workbench<br/>(Dashboard & Form Components)"]
+        API["Route Handlers<br/>(/api/wallets, /api/rates, /api/transactions)"]
+    end
+
+    subgraph Application_Layer ["2. Application Use Cases"]
+        DepositUC["DepositFundsUseCase"]
+        WithdrawUC["WithdrawFundsUseCase"]
+        ConvertUC["ConvertFundsUseCase"]
+        TransferUC["TransferFundsUseCase"]
+        CreateWalletUC["CreateWalletUseCase"]
+        QueryUC["GetWallets & Transactions"]
+    end
+
+    subgraph Domain_Layer ["3. Domain Core (Pure TypeScript)"]
+        WalletEntity["Wallet Entity & Invariants"]
+        TxEntity["Transaction Entity"]
+        MoneyVO["Money & Currency Utilities"]
+        Errors["Domain Error Hierarchy"]
+    end
+
+    subgraph Infrastructure_Layer ["4. Infrastructure & Gateways"]
+        PrismaRepo["Prisma SQLite Repositories<br/>(dev.db)"]
+        FrankfurterClient["Frankfurter API Client<br/>(api.frankfurter.dev / cache)"]
+        RateCache["In-Memory Rate Cache<br/>(TTL 60s + Offline Fallback)"]
+    end
+
+    Page --> API
+    API --> Application_Layer
+    Application_Layer --> Domain_Layer
+    Application_Layer --> PrismaRepo
+    Application_Layer --> FrankfurterClient
+    FrankfurterClient --> RateCache
+`} />
+
+### 1.1 Architectural Tier Breakdown:
+- **Domain Layer (`src/core/domain/`):**
+  Contains pure business entities (`Wallet`, `Transaction`), currency precision utilities, and the typed domain error hierarchy. Framework-agnostic with zero external dependencies.
+- **Application Layer (`src/core/use-cases/`):**
+  Orchestrates transactional flows, validates business prerequisites, queries exchange rates, and coordinates persistence across domain boundaries.
+- **Infrastructure Layer (`src/infrastructure/`):**
+  Implements persistence via Prisma ORM (SQLite `dev.db`), dependency injection container, and the Frankfurter external API gateway.
+- **Presentation / API Layer (`src/app/`):**
+  Exposes REST App Router endpoints and renders the interactive reactive UI dashboard.
+
+---
+
+## 🌐 2. Frankfurter External API Gateway & Resilience Strategy
+
+The Frankfurter API is an open-source public foreign exchange rates service tracking European Central Bank (ECB) reference rates. While it requires no authentication key, enterprise reliability mandates circuit resilience and caching.
+
+<Mermaid withCard showSource chart={`sequenceDiagram
+    autonumber
+    actor User as Simulated User
+    participant UC as ConvertFundsUseCase
+    participant Cache as Rate Cache (Memory)
+    participant Ext as Frankfurter API
+    participant DB as SQLite Database
+
+    User->>UC: Execute Convert (100 USD -> EUR)
+    UC->>Cache: GetRate("USD", "EUR")
+    alt Rate exists in Cache & Valid (TTL 60s)
+        Cache-->>UC: Return Cached Rate (e.g. 0.92)
+    else Cache Miss or Expired
+        UC->>Ext: GET /v2/rate/usd/eur (timeout: 3s)
+        alt API Response OK
+            Ext-->>UC: { "rate": 0.9215 }
+            UC->>Cache: SetRate("USD", "EUR", 0.9215, ttl: 60)
+        else Network Timeout or Service Error
+            UC->>Cache: Request Fallback Static Rate Matrix
+            Cache-->>UC: Fallback Arbitrage Rate (e.g. 0.92)
+        end
+    end
+    UC->>DB: Debit Source Wallet (USD -100.00)
+    UC->>DB: Credit Target Wallet (EUR +92.15)
+    UC->>DB: Persist Paired Transactions (CONVERT_OUT, CONVERT_IN)
+    UC-->>User: Return Conversion Success with Correlation Ref ID
+`} />
+
+### 2.1 Resilience Guardrails:
+1. **In-Memory Rate Caching (TTL 60s):**
+   Neutralizes latency spikes and prevents rate-limiting when the user triggers rapid conversions or queries.
+2. **Graceful Offline Fallback Matrix:**
+   If the evaluation environment lacks internet access or the public API experiences downtime, the gateway automatically falls back to an internal calibrated reference matrix (`USD`, `EUR`, `GBP`, `SGD`, `IDR`) using cross-currency triangular arbitrage.
+3. **HTTP Fetch Timeout:**
+   External network requests are guarded with a 3,000ms timeout using `AbortSignal.timeout(3000)` to prevent blocking threads.
+
+---
+
+## ⚖️ 3. Atomic Double-Entry Ledger Pattern
+
+To guarantee financial consistency and eliminate balance drift during conversions and transfers, the system enforces double-entry bookkeeping:
+
+1. **Shared Correlation Reference ID:**
+   A single unique UUID is shared between the debit transaction (`_OUT`) and credit transaction (`_IN`).
+2. **Double-Entry Balance Updates:**
+   Both source and destination balances are updated, with corresponding audit records persisted in the ledger.
+3. **Audit Immutability:**
+   Transaction records are strictly append-only and immutable.
+
+---
+
+## 🗄️ 4. Relational Database Schema (Prisma SQLite)
+
+The schema in SQLite (`dev.db`) enforces relational integrity and audit cascade relationships (with unique currency constraints intentionally removed in Phase 11 to support multiple pockets per currency):
+
+```prisma
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  wallets   Wallet[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Wallet {
+  id           String        @id @default(uuid())
+  userId       String
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currency     String        // USD, EUR, GBP, SGD, IDR
+  name         String        @default("Main") // e.g. USD Main, USD Savings
+  balance      Float         @default(0.0)
+  status       String        @default("ACTIVE") // ACTIVE, SUSPENDED
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  transactions Transaction[]
+}
+
+model Transaction {
+  id                    String   @id @default(uuid())
+  walletId              String
+  wallet                Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  type                  String   // DEPOSIT, WITHDRAWAL, CONVERT_OUT, CONVERT_IN, TRANSFER_OUT, TRANSFER_IN
+  amount                Float
+  currency              String
+  balanceAfter          Float
+  referenceId           String   // Shared Correlation UUID
+  counterpartyWalletId  String?
+  counterpartyCurrency  String?
+  exchangeRate          Float?
+  notes                 String?
+  createdAt             DateTime @default(now())
+}
+```

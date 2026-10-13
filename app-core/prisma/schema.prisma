@@ -1,0 +1,46 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  wallets   Wallet[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Wallet {
+  id           String        @id @default(uuid())
+  userId       String
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currency     String        // USD, EUR, GBP, SGD, IDR
+  name         String        @default("Main") // e.g. USD Main, USD Savings
+  balance      Float         @default(0.0)
+  status       String        @default("ACTIVE") // ACTIVE, SUSPENDED
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  transactions Transaction[]
+}
+
+model Transaction {
+  id                    String   @id @default(uuid())
+  walletId              String
+  wallet                Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  type                  String   // DEPOSIT, WITHDRAWAL, CONVERT_OUT, CONVERT_IN, TRANSFER_OUT, TRANSFER_IN
+  amount                Float
+  currency              String
+  balanceAfter          Float
+  referenceId           String   // Shared Correlation UUID
+  counterpartyWalletId  String?
+  counterpartyCurrency  String?
+  exchangeRate          Float?
+  notes                 String?
+  createdAt             DateTime @default(now())
+}

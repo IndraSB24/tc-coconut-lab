@@ -1,0 +1,46 @@
+---
+title: 'Tech Stack & Engineering Standards'
+sidebar_label: Tech Stack
+sidebar_position: 1
+---
+
+<div className="page-header-wrapper">
+  <div className="page-badge">
+    <span className="status-badge status-badge--implemented">Status: Implemented</span>
+  </div>
+
+# 🛠️ Tech Stack & Engineering Standards
+
+</div>
+
+> **Created at:** 2026-10-13 | **Updated at:** 2026-10-14 <br />
+> **Initiator:** Indra SB | **Last Auditor:** Indra SB
+
+This document outlines the core technology stack, architectural invariants, and engineering standards governing the **Multi-Currency Digital Wallet Application**.
+
+---
+
+## 🧰 1. Core Technology Matrix
+
+| Layer | Technology | Version | Rationale & Trade-offs |
+|---|---|---|---|
+| **Fullstack Framework** | **Next.js (App Router)** | `16.x` | Monolithic fullstack architecture offering zero-CORS friction, React Server Components, and native Route Handlers on Port 3000. |
+| **Language** | **TypeScript** | `5.x (Strict)` | End-to-end type safety spanning domain entities, DTOs, repository interfaces, and UI props. |
+| **Styling & UI** | **Tailwind CSS & Lucide Icons** | `v4` | High-velocity utility-first styling with accessible, responsive dark-mode UI primitives. |
+| **ORM & Persistence** | **Prisma ORM with SQLite** | `6.x` | Embedded relational persistence (`file:./dev.db`) requiring zero external database daemon or container latency, with instant schema push (`npx prisma db push`). |
+| **Unit Testing** | **Vitest** | `5.x` | High-speed ESM-native test runner executing all 81 domain & component tests in under 1 second. |
+| **External Integration** | **Frankfurter API** | `v1 / v2` | Open-source ECB foreign exchange reference rates without API key or rate-limit lockouts. |
+| **Docs-as-Code Engine** | **Docusaurus** | `3.x` | Headless architectural documentation engine running independently on Port 7001. |
+
+---
+
+## 🏛️ 2. Key Architectural Invariants
+
+1. **Domain-Driven Isolation (Clean Architecture):**
+   Business logic and transaction invariants reside strictly inside `src/core/use-cases/`. Next.js HTTP adapters (`src/app/api/`) and Prisma repository adapters never leak into domain entities.
+2. **Unified API Envelope:**
+   Every REST endpoint returns a standard JSON payload: `{ success, data, error, meta }`.
+3. **Simulated User Session:**
+   Utilizes a lightweight mock session with zero external auth library bloat (NextAuth, OAuth, JWT), ensuring instant test evaluation.
+4. **Resilient Gateway with Circuit Fallback:**
+   The external exchange rate service features in-memory caching and offline fallback, ensuring high test resilience even in disconnected sandbox environments.

@@ -1,0 +1,61 @@
+---
+title: 'Phase 2: Frankfurter API Gateway, Conversion & Transfer'
+sidebar_label: Phase 2 - Rates, Conversion & Transfer
+sidebar_position: 3
+---
+
+<div className="page-header-wrapper">
+  <div className="page-badge">
+    <span className="status-badge status-badge--implemented">Status: Implemented</span>
+  </div>
+
+# 🚧 Phase 2: Frankfurter API Gateway, Conversion & Transfer
+
+</div>
+
+> **Created at:** 2026-10-13 | **Updated at:** 2026-10-13 <br />
+> **Initiator:** Indra SB | **Last Auditor:** Indra SB
+
+> **Target Timeline:** Wave 2  
+> **Status:** Implemented (100% Completed)
+
+This phase integrated the external Frankfurter API for live foreign exchange rates, implemented in-memory TTL caching with offline circuit fallback, and orchestrated multi-currency conversion and inter-wallet transfer use cases.
+
+---
+
+## 🎯 1. Scope & Intent
+
+1. **Frankfurter External API Gateway:**
+   - Queries `https://api.frankfurter.dev/v2/rate/{base}/{quote}` with fallback to `api.frankfurter.app/latest`.
+   - Protected by a 3,000ms fetch timeout (`AbortSignal.timeout(3000)`).
+   - In-memory rate cache with a 60-second TTL to avoid redundant requests and rate-limiting.
+   - Static calibrated reference matrix (`STATIC_USD_RATES`) with triangular cross-arbitrage fallback during network outages.
+2. **Atomic Conversion Engine:**
+   - Validates source wallet solvency (`balance >= amount`).
+   - Computes target currency credit (`amount * rate`) with currency-specific decimal scale rounding.
+   - Persists paired atomic double-entry ledger transactions: `CONVERT_OUT` (debit) and `CONVERT_IN` (credit) bound by a shared `referenceId` UUID.
+3. **Inter-Wallet Transfer Engine:**
+   - Validates distinct wallet endpoints (`fromWalletId !== toWalletId`).
+   - Supports both same-currency 1:1 transfers and cross-currency transfers with automatic rate conversion.
+4. **Automated Testing:**
+   - Isolated unit tests validating cache hit/miss, mock exchange rates, and offline fallback matrix calculations.
+
+---
+
+## 📋 2. Epic Task List
+
+### 🌐 Frankfurter Gateway & Cache
+- [x] Defined service contract interface `IExchangeRateService`
+- [x] Implemented `FrankfurterExchangeRateService` with fetch timeout, caching, and fallback matrix
+- [x] Implemented in-memory rate caching with 60-second TTL
+- [x] Calibrated static reference matrix (`USD`, `EUR`, `GBP`, `SGD`, `JPY`) with triangular cross-arbitrage
+
+### 💱 Application Use Cases
+- [x] Implemented `ConvertFundsUseCase` (atomic double-entry conversion)
+- [x] Implemented `TransferFundsUseCase` (1:1 direct and cross-currency transfers)
+- [x] Handled domain errors: `SelfTransferError` and `ExchangeRateUnavailableError`
+
+### 🧪 Automated Testing
+- [x] Verified `FrankfurterGateway.spec.ts` (4 passed)
+- [x] Verified `ConvertFunds.spec.ts` (6 passed)
+- [x] Verified `TransferFunds.spec.ts` (5 passed)
